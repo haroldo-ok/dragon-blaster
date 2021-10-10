@@ -36,10 +36,6 @@ void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char 
 	
 	sa->x = x;
 	sa->y = y;
-	sa->incr_x.w = 0;
-	sa->incr_y.w = 0;
-	sa->spd_x.w = 0;
-	sa->spd_y.w = 0;
 	sa->facing_left = 1;
 	
 	sa->char_w = char_w;
@@ -74,19 +70,6 @@ void move_actor(actor *act) {
 	
 	_act = act;
 	
-	_act->incr_x.w += _act->spd_x.w;
-	_act->incr_y.w += _act->spd_y.w;
-	
-	if (_act->incr_x.b.h) {
-		_act->x += _act->incr_x.b.h;
-		_act->incr_x.b.h = 0;
-	}
-	
-	if (_act->incr_y.b.h) {
-		_act->y += _act->incr_y.b.h;
-		_act->incr_y.b.h = 0;
-	}
-	
 	if (_act->state_timer) _act->state_timer--;
 }
 
@@ -114,16 +97,6 @@ void draw_actor(actor *act) {
 		if (_act->frame >= _act->frame_max) _act->frame = 0;
 		_act->animation_delay = _act->animation_delay_max;
 	}
-}
-
-void aim_actor_towards(actor *act, actor *target, int speed) {
-	int delta_x = target->x - act->x;
-	int delta_y = target->y - act->y;
-	int distance = (abs(delta_x) + abs(delta_y)) / 4; // Manhattan distance divided by scaling factor
-	if (!distance) distance = 1;
-	
-	act->spd_x.w = delta_x * speed / distance;
-	act->spd_y.w = delta_y * speed / distance;
 }
 
 void wait_frames(int wait_time) {

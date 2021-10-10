@@ -15,12 +15,14 @@ typedef union _fixed {
   int w;
 } fixed;
 
+typedef struct _path_step {
+	signed char x, y;
+} path_step;
+
 typedef struct actor {
 	char active;
 	
 	int x, y;
-	fixed incr_x, incr_y;
-	fixed spd_x, spd_y;
 	
 	char facing_left;
 	
@@ -41,8 +43,6 @@ void draw_meta_sprite(int x, int y, int w, int h, unsigned char tile);
 void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char base_tile, unsigned char frame_count);
 void move_actor(actor *act);
 void draw_actor(actor *act);
-
-void aim_actor_towards(actor *act, actor *target, int speed);
 
 void wait_frames(int wait_time);
 
