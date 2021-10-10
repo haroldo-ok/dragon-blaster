@@ -21,6 +21,8 @@ actor player_shots[PLAYER_SHOT_MAX];
 
 struct ply_ctl {
 	char shot_delay;
+	char shot_type;
+	char pressed_shot_selection;
 } ply_ctl;
 
 void load_standard_palettes() {
@@ -53,6 +55,16 @@ void handle_player_input() {
 				ply_ctl.shot_delay = 4;
 			}
 		}
+	}
+	
+	if (joy & PORT_A_KEY_2) {
+		if (!ply_ctl.pressed_shot_selection) {
+			ply_ctl.shot_type++;
+			if (ply_ctl.shot_type > 2) ply_ctl.shot_type = 0;
+			ply_ctl.pressed_shot_selection = 1;
+		}
+	} else {
+		ply_ctl.pressed_shot_selection = 0;
 	}
 	
 	if (ply_ctl.shot_delay) ply_ctl.shot_delay--;
@@ -90,7 +102,19 @@ char fire_player_shot() {
 	
 	FOR_EACH_PLAYER_SHOT(sht) {
 		if (!sht->active) {
-			init_actor(sht, player.x + 8, player.y - 8, 1, 1, 26, 3);
+			switch (ply_ctl.shot_type) {
+			case 0:
+				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 26, 3);
+				break;
+
+			case 1:
+				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 32, 4);
+				break;
+
+			case 2:
+				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 40, 2);
+				break;
+			}
 			
 			// Fired something
 			return 1;
@@ -115,6 +139,7 @@ void main() {
 	init_actor(&player, 116, PLAYER_BOTTOM - 16, 3, 1, 2, 3);
 	player.animation_delay = 20;
 	ply_ctl.shot_delay = 0;
+	ply_ctl.shot_type = 0;
 	
 	init_player_shots();
 	
