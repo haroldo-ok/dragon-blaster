@@ -52,6 +52,9 @@ void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char 
 	sa->frame_increment = char_w * (char_h << 1);
 	sa->frame_max = sa->frame_increment * frame_count;
 	
+	sa->path = 0;
+	sa->curr_step = 0;
+	
 	sa->col_w = sa->pixel_w - 4;
 	sa->col_h = sa->pixel_h - 4;
 	sa->col_x = (sa->pixel_w - sa->col_w) >> 1;
@@ -63,12 +66,22 @@ void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char 
 
 void move_actor(actor *act) {
 	static actor *_act;
+	static path_step *step;
 	
 	if (!act->active) {
 		return;
 	}
 	
 	_act = act;
+	
+	if (act->path) {
+		if (!act->curr_step) act->curr_step = act->path;
+		step = act->curr_step++;
+		if (step->x == -128) step = act->curr_step = act->path;
+		
+		act->x += step->x;
+		act->y += step->y;
+	}
 	
 	if (_act->state_timer) _act->state_timer--;
 }

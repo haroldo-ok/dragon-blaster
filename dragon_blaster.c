@@ -15,6 +15,11 @@
 #define PLAYER_SHOT_SPEED (4)
 #define PLAYER_SHOT_MAX (16)
 #define FOR_EACH_PLAYER_SHOT(sht) sht = player_shots; for (int i = PLAYER_SHOT_MAX; i; i--, sht++)
+	
+path_step lightining_path[] = {
+	{0, -4},
+	{-128, -128}
+};
 
 actor player;
 actor player_shots[PLAYER_SHOT_MAX];
@@ -83,7 +88,7 @@ void handle_player_shots() {
 	
 	FOR_EACH_PLAYER_SHOT(sht) {
 		if (sht->active) {
-			sht->y -= PLAYER_SHOT_SPEED;
+			move_actor(sht);
 			if (sht->y < 0) sht->active = 0;
 		}
 	}
@@ -115,6 +120,8 @@ char fire_player_shot() {
 				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 40, 2);
 				break;
 			}
+			
+			sht->path = lightining_path;
 			
 			// Fired something
 			return 1;

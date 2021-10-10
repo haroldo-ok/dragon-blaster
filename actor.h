@@ -33,6 +33,8 @@ typedef struct actor {
 	unsigned char base_tile, frame_count;
 	unsigned char frame, frame_increment, frame_max;
 	
+	path_step *path, *curr_step;
+	
 	unsigned char state;
 	int state_timer;
 	
