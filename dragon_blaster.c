@@ -21,6 +21,30 @@ path_step lightining_path[] = {
 	{-128, -128}
 };
 
+path_step fire_path[] = {
+	{0, -2},
+	{4, -2},
+	{4, -2},
+	{3, -2},
+	{2, -2},
+	{0, -2},
+	{-2, -2},
+	{-3, -2},
+	{-4, -2},
+	{-4, -2},
+	{-4, -2},
+	{-4, -2},
+	{-3, -2},
+	{-2, -2},
+	{0, -2},
+	{2, -2},
+	{3, -2},
+	{4, -2},
+	{4, -2},
+	{0, -2},
+	{-128, -128}
+};
+
 actor player;
 actor player_shots[PLAYER_SHOT_MAX];
 
@@ -57,7 +81,19 @@ void handle_player_input() {
 	if (joy & PORT_A_KEY_2) {
 		if (!ply_ctl.shot_delay) {
 			if (fire_player_shot()) {
-				ply_ctl.shot_delay = 4;
+				switch (ply_ctl.shot_type) {
+				case 0:
+					ply_ctl.shot_delay = 4;
+					break;
+
+				case 1:
+					ply_ctl.shot_delay = 8;
+					break;
+
+				case 2:
+					ply_ctl.shot_delay = 8;
+					break;
+				}
 			}
 		}
 	}
@@ -90,6 +126,7 @@ void handle_player_shots() {
 		if (sht->active) {
 			move_actor(sht);
 			if (sht->y < 0) sht->active = 0;
+			if (sht->state == 1 && !sht->state_timer) sht->active = 0;
 		}
 	}
 }
@@ -110,19 +147,22 @@ char fire_player_shot() {
 			switch (ply_ctl.shot_type) {
 			case 0:
 				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 26, 3);
+				sht->path = lightining_path;
 				break;
 
 			case 1:
 				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 32, 4);
+				sht->path = fire_path;
+				sht->state = 1;
+				sht->state_timer = 45;
 				break;
 
 			case 2:
 				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 40, 2);
+				sht->path = lightining_path;
 				break;
 			}
-			
-			sht->path = lightining_path;
-			
+						
 			// Fired something
 			return 1;
 		}
