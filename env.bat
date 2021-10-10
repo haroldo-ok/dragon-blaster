@@ -1,0 +1,1 @@
+path %PATH%;C:\Util\GnuWin32\GetGnuWin32\gnuwin32\bin;D:\Util\bmp2tile-0.5;D:\Pessoal\Util\psgtalk;D:\Pessoal\Util\PSGlib-1.0.0\tools
