@@ -49,7 +49,7 @@ void handle_player_input() {
 		if (player.y < PLAYER_BOTTOM) player.y += PLAYER_SPEED;
 	}
 	
-	if (joy & PORT_A_KEY_1) {
+	if (joy & PORT_A_KEY_2) {
 		if (!ply_ctl.shot_delay) {
 			if (fire_player_shot()) {
 				ply_ctl.shot_delay = 4;
@@ -57,7 +57,7 @@ void handle_player_input() {
 		}
 	}
 	
-	if (joy & PORT_A_KEY_2) {
+	if (joy & PORT_A_KEY_1) {
 		if (!ply_ctl.pressed_shot_selection) {
 			ply_ctl.shot_type++;
 			if (ply_ctl.shot_type > 2) ply_ctl.shot_type = 0;
