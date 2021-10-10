@@ -6,7 +6,11 @@
 #include "actor.h"
 #include "data.h"
 
+#define PLAYER_TOP (0)
+#define PLAYER_LEFT (0)
+#define PLAYER_RIGHT (256 - 16)
 #define PLAYER_BOTTOM (SCREEN_H - 16)
+#define PLAYER_SPEED (2)
 
 actor player;
 
@@ -14,6 +18,22 @@ void load_standard_palettes() {
 	SMS_loadBGPalette(sprites_palette_bin);
 	SMS_loadSpritePalette(sprites_palette_bin);
 	SMS_setSpritePaletteColor(0, 0);
+}
+
+void handle_player_input() {
+	unsigned char joy = SMS_getKeysStatus();
+
+	if (joy & PORT_A_KEY_LEFT) {
+		if (player.x > PLAYER_LEFT) player.x -= PLAYER_SPEED;
+	} else if (joy & PORT_A_KEY_RIGHT) {
+		if (player.x < PLAYER_RIGHT) player.x += PLAYER_SPEED;
+	}
+
+	if (joy & PORT_A_KEY_UP) {
+		if (player.y > PLAYER_TOP) player.y -= PLAYER_SPEED;
+	} else if (joy & PORT_A_KEY_DOWN) {
+		if (player.y < PLAYER_BOTTOM) player.y += PLAYER_SPEED;
+	}
 }
 
 void main() {
@@ -28,8 +48,11 @@ void main() {
 	SMS_displayOn();
 	
 	init_actor(&player, 116, PLAYER_BOTTOM - 16, 3, 1, 2, 3);
+	player.animation_delay = 20;
 	
 	while (1) {	
+		handle_player_input();
+	
 		SMS_initSprites();
 
 		draw_actor(&player);
