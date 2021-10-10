@@ -12,7 +12,16 @@
 #define PLAYER_BOTTOM (SCREEN_H - 16)
 #define PLAYER_SPEED (2)
 
+#define PLAYER_SHOT_SPEED (4)
+#define PLAYER_SHOT_MAX (16)
+#define FOR_EACH_PLAYER_SHOT(sht) sht = player_shots; for (int i = PLAYER_SHOT_MAX; i; i--, sht++)
+
 actor player;
+actor player_shots[PLAYER_SHOT_MAX];
+
+struct ply_ctl {
+	char shot_delay;
+} ply_ctl;
 
 void load_standard_palettes() {
 	SMS_loadBGPalette(sprites_palette_bin);
@@ -20,8 +29,11 @@ void load_standard_palettes() {
 	SMS_setSpritePaletteColor(0, 0);
 }
 
+char fire_player_shot();
+
 void handle_player_input() {
-	unsigned char joy = SMS_getKeysStatus();
+	static unsigned char joy;	
+	joy = SMS_getKeysStatus();
 
 	if (joy & PORT_A_KEY_LEFT) {
 		if (player.x > PLAYER_LEFT) player.x -= PLAYER_SPEED;
@@ -34,6 +46,59 @@ void handle_player_input() {
 	} else if (joy & PORT_A_KEY_DOWN) {
 		if (player.y < PLAYER_BOTTOM) player.y += PLAYER_SPEED;
 	}
+	
+	if (joy & PORT_A_KEY_1) {
+		if (!ply_ctl.shot_delay) {
+			if (fire_player_shot()) {
+				ply_ctl.shot_delay = 4;
+			}
+		}
+	}
+	
+	if (ply_ctl.shot_delay) ply_ctl.shot_delay--;
+}
+
+void init_player_shots() {
+	static actor *sht;
+	
+	FOR_EACH_PLAYER_SHOT(sht) {
+		sht->active = 0;
+	}
+}
+
+void handle_player_shots() {
+	static actor *sht;
+	
+	FOR_EACH_PLAYER_SHOT(sht) {
+		if (sht->active) {
+			sht->y -= PLAYER_SHOT_SPEED;
+			if (sht->y < 0) sht->active = 0;
+		}
+	}
+}
+
+void draw_player_shots() {
+	static actor *sht;
+	
+	FOR_EACH_PLAYER_SHOT(sht) {
+		draw_actor(sht);
+	}
+}
+
+char fire_player_shot() {
+	static actor *sht;
+	
+	FOR_EACH_PLAYER_SHOT(sht) {
+		if (!sht->active) {
+			init_actor(sht, player.x + 8, player.y - 8, 1, 1, 26, 3);
+			
+			// Fired something
+			return 1;
+		}
+	}
+
+	// Didn't fire anything
+	return 0;
 }
 
 void main() {
@@ -49,13 +114,18 @@ void main() {
 	
 	init_actor(&player, 116, PLAYER_BOTTOM - 16, 3, 1, 2, 3);
 	player.animation_delay = 20;
+	ply_ctl.shot_delay = 0;
+	
+	init_player_shots();
 	
 	while (1) {	
 		handle_player_input();
+		handle_player_shots();
 	
 		SMS_initSprites();
 
 		draw_actor(&player);
+		draw_player_shots();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
