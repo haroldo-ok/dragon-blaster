@@ -15,12 +15,62 @@
 #define PLAYER_SHOT_SPEED (4)
 #define PLAYER_SHOT_MAX (16)
 #define FOR_EACH_PLAYER_SHOT(sht) sht = player_shots; for (int i = PLAYER_SHOT_MAX; i; i--, sht++)
+	
+const path_step lightining_path[] = {
+	{0, -4},
+	{-128, -128}
+};
+
+const path_step fire_path[] = {
+	{0, -2},
+	{4, -2},
+	{4, -2},
+	{3, -2},
+	{2, -2},
+	{0, -2},
+	{-2, -2},
+	{-3, -2},
+	{-4, -2},
+	{-4, -2},
+	{-4, -2},
+	{-4, -2},
+	{-3, -2},
+	{-2, -2},
+	{0, -2},
+	{2, -2},
+	{3, -2},
+	{4, -2},
+	{4, -2},
+	{0, -2},
+	{-128, -128}
+};
+
+const path_step wind_path0[] = {
+	{-2, -3},
+	{-128, -128}
+};
+
+const path_step wind_path1[] = {
+	{0, -4},
+	{-128, -128}
+};
+
+const path_step wind_path2[] = {
+	{2, -3},
+	{-128, -128}
+};
+
+const path_step *wind_paths[] = {
+	wind_path0, wind_path1, wind_path2
+};
 
 actor player;
 actor player_shots[PLAYER_SHOT_MAX];
 
 struct ply_ctl {
 	char shot_delay;
+	char shot_type;
+	char pressed_shot_selection;
 } ply_ctl;
 
 void load_standard_palettes() {
@@ -47,12 +97,34 @@ void handle_player_input() {
 		if (player.y < PLAYER_BOTTOM) player.y += PLAYER_SPEED;
 	}
 	
-	if (joy & PORT_A_KEY_1) {
+	if (joy & PORT_A_KEY_2) {
 		if (!ply_ctl.shot_delay) {
 			if (fire_player_shot()) {
-				ply_ctl.shot_delay = 4;
+				switch (ply_ctl.shot_type) {
+				case 0:
+					ply_ctl.shot_delay = 4;
+					break;
+
+				case 1:
+					ply_ctl.shot_delay = 8;
+					break;
+
+				case 2:
+					ply_ctl.shot_delay = 12;
+					break;
+				}
 			}
 		}
+	}
+	
+	if (joy & PORT_A_KEY_1) {
+		if (!ply_ctl.pressed_shot_selection) {
+			ply_ctl.shot_type++;
+			if (ply_ctl.shot_type > 2) ply_ctl.shot_type = 0;
+			ply_ctl.pressed_shot_selection = 1;
+		}
+	} else {
+		ply_ctl.pressed_shot_selection = 0;
 	}
 	
 	if (ply_ctl.shot_delay) ply_ctl.shot_delay--;
@@ -71,8 +143,9 @@ void handle_player_shots() {
 	
 	FOR_EACH_PLAYER_SHOT(sht) {
 		if (sht->active) {
-			sht->y -= PLAYER_SHOT_SPEED;
+			move_actor(sht);
 			if (sht->y < 0) sht->active = 0;
+			if (sht->state == 1 && !sht->state_timer) sht->active = 0;
 		}
 	}
 }
@@ -87,18 +160,44 @@ void draw_player_shots() {
 
 char fire_player_shot() {
 	static actor *sht;
+	static char shots_to_fire, fired;
+	shots_to_fire = ply_ctl.shot_type == 2 ? 3 : 1;
+	fired = 0;
 	
 	FOR_EACH_PLAYER_SHOT(sht) {
 		if (!sht->active) {
-			init_actor(sht, player.x + 8, player.y - 8, 1, 1, 26, 3);
-			
+			switch (ply_ctl.shot_type) {
+			case 0:
+				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 26, 3);
+				sht->path = lightining_path;
+				sht->state = 1;
+				sht->state_timer = 45;
+				break;
+
+			case 1:
+				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 32, 4);
+				sht->path = fire_path;
+				sht->state = 1;
+				sht->state_timer = 45;
+				break;
+
+			case 2:
+				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 40, 2);
+				sht->path = wind_paths[shots_to_fire - 1];
+				sht->state = 1;
+				sht->state_timer = 45;
+				break;
+			}
+						
 			// Fired something
-			return 1;
+			fired = 1;
+			shots_to_fire--;
+			if (!shots_to_fire)	return 1;
 		}
 	}
 
 	// Didn't fire anything
-	return 0;
+	return fired;
 }
 
 void main() {
@@ -115,6 +214,7 @@ void main() {
 	init_actor(&player, 116, PLAYER_BOTTOM - 16, 3, 1, 2, 3);
 	player.animation_delay = 20;
 	ply_ctl.shot_delay = 0;
+	ply_ctl.shot_type = 0;
 	
 	init_player_shots();
 	
