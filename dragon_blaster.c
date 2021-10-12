@@ -16,6 +16,18 @@
 #define PLAYER_SHOT_MAX (16)
 #define FOR_EACH_PLAYER_SHOT(sht) sht = player_shots; for (int i = PLAYER_SHOT_MAX; i; i--, sht++)
 	
+typedef struct _path {
+	signed char x, y;
+	char flags;
+	path_step *steps;
+} path;
+
+typedef struct _shot_info {
+	char base_tile, frame_count;
+	char length;
+	path *paths;
+} shot_info;	
+	
 const path_step lightining_path[] = {
 	{0, -4},
 	{-128, -128}
@@ -60,8 +72,14 @@ const path_step wind_path2[] = {
 	{-128, -128}
 };
 
-const path_step *wind_paths[] = {
-	wind_path0, wind_path1, wind_path2
+const path wind_paths[] = {
+	{8, -8, 0, wind_path0},
+	{8, -8, 0, wind_path1},
+	{8, -8, 0, wind_path2}
+};
+
+const shot_info wind_shot = {
+	40, 2, 3, wind_paths
 };
 
 actor player;
@@ -161,13 +179,21 @@ void draw_player_shots() {
 char fire_player_shot() {
 	static actor *sht;
 	static char shots_to_fire, fired;
-	shots_to_fire = ply_ctl.shot_type == 2 ? 3 : 1;
+	static shot_info *info;
+	static path *path;
+	
+	info = &wind_shot;
+	path = info->paths;
+	shots_to_fire = info->length;
 	fired = 0;
+	
+	ply_ctl.shot_type = 2; // FIXME: *** DEBUG **
 	
 	FOR_EACH_PLAYER_SHOT(sht) {
 		if (!sht->active) {
 			switch (ply_ctl.shot_type) {
-			case 0:
+				/*
+			case 0:			
 				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 26, 3);
 				sht->path = lightining_path;
 				sht->state = 1;
@@ -180,10 +206,15 @@ char fire_player_shot() {
 				sht->state = 1;
 				sht->state_timer = 45;
 				break;
+				*/
 
 			case 2:
-				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 40, 2);
-				sht->path = wind_paths[shots_to_fire - 1];
+				init_actor(sht, 
+					player.x + path->x, player.y + path->y, 
+					1, 1, 
+					info->base_tile, info->frame_count);
+					
+				sht->path = path->steps;
 				sht->state = 1;
 				sht->state_timer = 45;
 				break;
@@ -191,6 +222,7 @@ char fire_player_shot() {
 						
 			// Fired something
 			fired = 1;
+			path++;
 			shots_to_fire--;
 			if (!shots_to_fire)	return 1;
 		}
