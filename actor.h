@@ -19,6 +19,12 @@ typedef struct _path_step {
 	signed char x, y;
 } path_step;
 
+typedef struct _path {
+	signed char x, y;
+	char flags;
+	path_step *steps;
+} path;
+
 typedef struct actor {
 	char active;
 	

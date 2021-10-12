@@ -4,6 +4,7 @@
 #include "lib/SMSlib.h"
 #include "lib/PSGlib.h"
 #include "actor.h"
+#include "shot.h"
 #include "data.h"
 
 #define PLAYER_TOP (0)
@@ -15,54 +16,6 @@
 #define PLAYER_SHOT_SPEED (4)
 #define PLAYER_SHOT_MAX (16)
 #define FOR_EACH_PLAYER_SHOT(sht) sht = player_shots; for (int i = PLAYER_SHOT_MAX; i; i--, sht++)
-	
-const path_step lightining_path[] = {
-	{0, -4},
-	{-128, -128}
-};
-
-const path_step fire_path[] = {
-	{0, -2},
-	{4, -2},
-	{4, -2},
-	{3, -2},
-	{2, -2},
-	{0, -2},
-	{-2, -2},
-	{-3, -2},
-	{-4, -2},
-	{-4, -2},
-	{-4, -2},
-	{-4, -2},
-	{-3, -2},
-	{-2, -2},
-	{0, -2},
-	{2, -2},
-	{3, -2},
-	{4, -2},
-	{4, -2},
-	{0, -2},
-	{-128, -128}
-};
-
-const path_step wind_path0[] = {
-	{-2, -3},
-	{-128, -128}
-};
-
-const path_step wind_path1[] = {
-	{0, -4},
-	{-128, -128}
-};
-
-const path_step wind_path2[] = {
-	{2, -3},
-	{-128, -128}
-};
-
-const path_step *wind_paths[] = {
-	wind_path0, wind_path1, wind_path2
-};
 
 actor player;
 actor player_shots[PLAYER_SHOT_MAX];
@@ -100,19 +53,7 @@ void handle_player_input() {
 	if (joy & PORT_A_KEY_2) {
 		if (!ply_ctl.shot_delay) {
 			if (fire_player_shot()) {
-				switch (ply_ctl.shot_type) {
-				case 0:
-					ply_ctl.shot_delay = 4;
-					break;
-
-				case 1:
-					ply_ctl.shot_delay = 8;
-					break;
-
-				case 2:
-					ply_ctl.shot_delay = 12;
-					break;
-				}
+				ply_ctl.shot_delay = player_shot_infos[ply_ctl.shot_type].firing_delay;
 			}
 		}
 	}
@@ -120,7 +61,7 @@ void handle_player_input() {
 	if (joy & PORT_A_KEY_1) {
 		if (!ply_ctl.pressed_shot_selection) {
 			ply_ctl.shot_type++;
-			if (ply_ctl.shot_type > 2) ply_ctl.shot_type = 0;
+			if (ply_ctl.shot_type >= PLAYER_SHOT_TYPE_COUNT) ply_ctl.shot_type = 0;
 			ply_ctl.pressed_shot_selection = 1;
 		}
 	} else {
@@ -161,36 +102,28 @@ void draw_player_shots() {
 char fire_player_shot() {
 	static actor *sht;
 	static char shots_to_fire, fired;
-	shots_to_fire = ply_ctl.shot_type == 2 ? 3 : 1;
+	static shot_info *info;
+	static path *path;
+	
+	info = player_shot_infos + ply_ctl.shot_type;
+	path = info->paths;
+	shots_to_fire = info->length;
 	fired = 0;
 	
 	FOR_EACH_PLAYER_SHOT(sht) {
 		if (!sht->active) {
-			switch (ply_ctl.shot_type) {
-			case 0:
-				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 26, 3);
-				sht->path = lightining_path;
-				sht->state = 1;
-				sht->state_timer = 45;
-				break;
-
-			case 1:
-				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 32, 4);
-				sht->path = fire_path;
-				sht->state = 1;
-				sht->state_timer = 45;
-				break;
-
-			case 2:
-				init_actor(sht, player.x + 8, player.y - 8, 1, 1, 40, 2);
-				sht->path = wind_paths[shots_to_fire - 1];
-				sht->state = 1;
-				sht->state_timer = 45;
-				break;
-			}
+			init_actor(sht, 
+				player.x + path->x, player.y + path->y, 
+				1, 1, 
+				info->base_tile, info->frame_count);
+				
+			sht->path = path->steps;
+			sht->state = 1;
+			sht->state_timer = info->life_time;
 						
 			// Fired something
 			fired = 1;
+			path++;
 			shots_to_fire--;
 			if (!shots_to_fire)	return 1;
 		}
@@ -234,7 +167,7 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,1, 2021,10,10, "Haroldo-OK\\2021", "Dragon Blaster",
+SMS_EMBED_SDSC_HEADER(0,1, 2021,10,12, "Haroldo-OK\\2021", "Dragon Blaster",
   "A dragon-themed shoot-em-up.\n"
   "Made for the SHMUP JAM 1 - Dragons - https://itch.io/jam/shmup-jam-1-dragons\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");
