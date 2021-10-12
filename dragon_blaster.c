@@ -4,6 +4,7 @@
 #include "lib/SMSlib.h"
 #include "lib/PSGlib.h"
 #include "actor.h"
+#include "shot.h"
 #include "data.h"
 
 #define PLAYER_TOP (0)
@@ -15,86 +16,6 @@
 #define PLAYER_SHOT_SPEED (4)
 #define PLAYER_SHOT_MAX (16)
 #define FOR_EACH_PLAYER_SHOT(sht) sht = player_shots; for (int i = PLAYER_SHOT_MAX; i; i--, sht++)
-	
-typedef struct _path {
-	signed char x, y;
-	char flags;
-	path_step *steps;
-} path;
-
-typedef struct _shot_info {
-	char base_tile, frame_count;
-	char length;
-	path *paths;
-} shot_info;	
-	
-const path_step lightining_path[] = {
-	{0, -4},
-	{-128, -128}
-};
-
-const path_step fire_path[] = {
-	{0, -2},
-	{4, -2},
-	{4, -2},
-	{3, -2},
-	{2, -2},
-	{0, -2},
-	{-2, -2},
-	{-3, -2},
-	{-4, -2},
-	{-4, -2},
-	{-4, -2},
-	{-4, -2},
-	{-3, -2},
-	{-2, -2},
-	{0, -2},
-	{2, -2},
-	{3, -2},
-	{4, -2},
-	{4, -2},
-	{0, -2},
-	{-128, -128}
-};
-
-const path_step wind_path0[] = {
-	{-2, -3},
-	{-128, -128}
-};
-
-const path_step wind_path1[] = {
-	{0, -4},
-	{-128, -128}
-};
-
-const path_step wind_path2[] = {
-	{2, -3},
-	{-128, -128}
-};
-
-const path lightining_paths[] = {
-	{8, -8, 0, lightining_path}
-};
-
-const path fire_paths[] = {
-	{8, -8, 0, fire_path}
-};
-
-const path wind_paths[] = {
-	{6, -6, 0, wind_path0},
-	{8, -8, 0, wind_path1},
-	{10, -6, 0, wind_path2}
-};
-
-const shot_info lightining_shot = {
-	26, 3, 1, lightining_paths
-};
-
-const shot_info player_shot_infos[] = {
-	{26, 3, 1, lightining_paths},
-	{32, 4, 1, fire_paths},
-	{40, 2, 3, wind_paths}
-};
 
 actor player;
 actor player_shots[PLAYER_SHOT_MAX];
