@@ -68,6 +68,18 @@ const path_step wind_path2[] = {
 	{-128, -128}
 };
 
+const path_step wind_path3[] = {
+	{-1, -4},
+	{0, -4},
+	{-128, -128}
+};
+
+const path_step wind_path4[] = {
+	{1, -4},
+	{0, -4},
+	{-128, -128}
+};
+
 const path lightining_paths[] = {
 	{8, -8, 0, lightining_path}
 };
@@ -86,10 +98,18 @@ const path wind_paths[] = {
 	{10, -6, 0, wind_path2}
 };
 
+const path tempest_paths[] = {
+	{6, -6, 0, wind_path0},
+	{7, -8, 0, wind_path3},
+	{9, -8, 0, wind_path4},
+	{10, -6, 0, wind_path2}
+};
+
 const shot_info player_shot_infos[PLAYER_SHOT_TYPE_COUNT] = {
 	{26, 3, 45, 4, 1, lightining_paths},
 	{32, 4, 40, 8, 1, fire_paths},
 	{40, 2, 45, 12, 3, wind_paths},
 	{44, 3, 45, 4, 1, lightining_paths},
 	{32, 4, 55, 8, 1, hellfire_paths},
+	{40, 2, 45, 12, 4, tempest_paths},
 };
