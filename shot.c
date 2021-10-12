@@ -61,5 +61,6 @@ const path wind_paths[] = {
 const shot_info player_shot_infos[PLAYER_SHOT_TYPE_COUNT] = {
 	{26, 3, 45, 4, 1, lightining_paths},
 	{32, 4, 45, 8, 1, fire_paths},
-	{40, 2, 45, 12, 3, wind_paths}
+	{40, 2, 45, 12, 3, wind_paths},
+	{44, 3, 45, 4, 1, lightining_paths},
 };
