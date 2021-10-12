@@ -3,7 +3,7 @@
 
 #include "actor.h"
 
-#define PLAYER_SHOT_TYPE_COUNT (8)
+#define PLAYER_SHOT_TYPE_COUNT (9)
 
 typedef struct _shot_info {
 	char base_tile, frame_count;
