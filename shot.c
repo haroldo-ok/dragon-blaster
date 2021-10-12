@@ -58,12 +58,8 @@ const path wind_paths[] = {
 	{10, -6, 0, wind_path2}
 };
 
-const shot_info lightining_shot = {
-	26, 3, 1, lightining_paths
-};
-
-const shot_info player_shot_infos[] = {
-	{26, 3, 1, lightining_paths},
-	{32, 4, 1, fire_paths},
-	{40, 2, 3, wind_paths}
+const shot_info player_shot_infos[PLAYER_SHOT_TYPE_COUNT] = {
+	{26, 3, 45, 4, 1, lightining_paths},
+	{32, 4, 45, 8, 1, fire_paths},
+	{40, 2, 45, 12, 3, wind_paths}
 };
