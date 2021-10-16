@@ -11,20 +11,29 @@
 #define PLAYER_LEFT (0)
 #define PLAYER_RIGHT (256 - 16)
 #define PLAYER_BOTTOM (SCREEN_H - 16)
-#define PLAYER_SPEED (2)
+#define PLAYER_SPEED (3)
 
 #define PLAYER_SHOT_SPEED (4)
 #define PLAYER_SHOT_MAX (16)
 #define FOR_EACH_PLAYER_SHOT(sht) sht = player_shots; for (int i = PLAYER_SHOT_MAX; i; i--, sht++)
 
+#define ENEMY_MAX (4)
+#define FOR_EACH_ENEMY(enm) enm = enemies; for (int i = ENEMY_MAX; i; i--, enm++)
+
 actor player;
 actor player_shots[PLAYER_SHOT_MAX];
+actor enemies[ENEMY_MAX];
 
 struct ply_ctl {
 	char shot_delay;
 	char shot_type;
 	char pressed_shot_selection;
 } ply_ctl;
+
+struct enemy_spawner {
+	char delay;
+	char next;
+} enemy_spawner;
 
 void load_standard_palettes() {
 	SMS_loadBGPalette(sprites_palette_bin);
@@ -133,6 +142,52 @@ char fire_player_shot() {
 	return fired;
 }
 
+void init_enemies() {
+	static actor *enm;
+	
+	enemy_spawner.delay = 0;
+	enemy_spawner.next = 0;
+	
+	FOR_EACH_ENEMY(enm) {
+		enm->active = 0;
+	}
+}
+
+void handle_enemies() {
+	static actor *enm;
+	
+	if (enemy_spawner.delay) {
+		enemy_spawner.delay--;
+	} else if (enemy_spawner.next != ENEMY_MAX) {
+		enm = enemies + enemy_spawner.next;
+		
+		init_actor(enm, 8, 0, 2, 1, 66, 1);
+		enm->path = (path_step *) path1_path;
+
+		enemy_spawner.delay = 10;
+		enemy_spawner.next++;
+	}
+	
+	FOR_EACH_ENEMY(enm) {
+		move_actor(enm);
+		move_actor(enm);
+		if (enm->x < -8 || enm->x > 255 || enm->y < -16 || enm->y > 192) {
+			enm->x = 8;
+			enm->y = 0;
+			enm->path = (path_step *) path1_path;
+			enm->curr_step = 0;
+		}
+	}	
+}
+
+void draw_enemies() {
+	static actor *enm;
+	
+	FOR_EACH_ENEMY(enm) {
+		draw_actor(enm);
+	}
+}
+
 void main() {
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
@@ -144,20 +199,24 @@ void main() {
 
 	SMS_displayOn();
 	
-	init_actor(&player, 116, PLAYER_BOTTOM - 16, 3, 1, 2, 3);
+	init_actor(&player, 116, PLAYER_BOTTOM - 16, 3, 1, 2, 4);
 	player.animation_delay = 20;
 	ply_ctl.shot_delay = 0;
 	ply_ctl.shot_type = 0;
-	
+
+	init_enemies();
 	init_player_shots();
+
 	
 	while (1) {	
 		handle_player_input();
+		handle_enemies();
 		handle_player_shots();
 	
 		SMS_initSprites();
 
 		draw_actor(&player);
+		draw_enemies();
 		draw_player_shots();
 		
 		SMS_finalizeSprites();
@@ -167,7 +226,7 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,1, 2021,10,12, "Haroldo-OK\\2021", "Dragon Blaster",
+SMS_EMBED_SDSC_HEADER(0,2, 2021,10,14, "Haroldo-OK\\2021", "Dragon Blaster",
   "A dragon-themed shoot-em-up.\n"
   "Made for the SHMUP JAM 1 - Dragons - https://itch.io/jam/shmup-jam-1-dragons\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");

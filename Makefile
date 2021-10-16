@@ -3,11 +3,14 @@ OBJS := data.rel actor.rel shot.rel dragon_blaster.rel
 
 all: $(PRJNAME).sms
 
-data.c: data/* data/sprites_tiles.psgcompr
+data.c: data/* data/sprites_tiles.psgcompr data/path1.path
 	folder2c data data
 	
 data/sprites_tiles.psgcompr: data/img/sprites.png
 	BMP2Tile.exe data/img/sprites.png -noremovedupes -8x16 -palsms -fullpalette -savetiles data/sprites_tiles.psgcompr -savepalette data/sprites_palette.bin
+	
+data/path1.path: data/path/path1.spline.json
+	node tool/convert_splines.js data/path/path1.spline.json data/path1.path
 	
 %.vgm: %.wav
 	psgtalk -r 512 -u 1 -m vgm $<
