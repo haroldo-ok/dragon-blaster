@@ -17,10 +17,12 @@
 #define PLAYER_SHOT_MAX (16)
 #define FOR_EACH_PLAYER_SHOT(sht) sht = player_shots; for (int i = PLAYER_SHOT_MAX; i; i--, sht++)
 
+#define ENEMY_MAX (4)
+#define FOR_EACH_ENEMY(enm) enm = enemies; for (int i = ENEMY_MAX; i; i--, enm++)
+
 actor player;
 actor player_shots[PLAYER_SHOT_MAX];
-
-actor enemy;
+actor enemies[ENEMY_MAX];
 
 struct ply_ctl {
 	char shot_delay;
@@ -136,22 +138,37 @@ char fire_player_shot() {
 }
 
 void init_enemies() {
-	init_actor(&enemy, 8, 0, 2, 1, 66, 1);
-	enemy.path = (path_step *) path1_path;
-}
-
-void handle_enemies() {
-	move_actor(&enemy);
-	if (enemy.x < -8 || enemy.x > 255 || enemy.y < -16 || enemy.y > 192) {
-		enemy.x = 8;
-		enemy.y = 0;
-		enemy.path = (path_step *) path1_path;
-		enemy.curr_step = 0;
+	static actor *enm;
+	char y = 0;
+	
+	FOR_EACH_ENEMY(enm) {
+		init_actor(enm, 8, y, 2, 1, 66, 1);
+		enm->path = (path_step *) path1_path;
+		y += 12;
 	}
 }
 
+void handle_enemies() {
+	static actor *enm;
+	
+	FOR_EACH_ENEMY(enm) {
+		move_actor(enm);
+		move_actor(enm);
+		if (enm->x < -8 || enm->x > 255 || enm->y < -16 || enm->y > 192) {
+			enm->x = 8;
+			enm->y = 0;
+			enm->path = (path_step *) path1_path;
+			enm->curr_step = 0;
+		}
+	}	
+}
+
 void draw_enemies() {
-	draw_actor(&enemy);
+	static actor *enm;
+	
+	FOR_EACH_ENEMY(enm) {
+		draw_actor(enm);
+	}
 }
 
 void main() {
