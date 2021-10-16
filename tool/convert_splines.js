@@ -1,3 +1,4 @@
+// Converts a spline saved by http://www.haroldo-ok.com/cardinal-spline-js/demos/editor into a format compatible with the engine
 const fs = require('fs');
 
 const arguments = process.argv.slice(2);
@@ -29,7 +30,6 @@ fs.readFile(sourcePath, 'utf8', (err, data) => {
 	const outputArray = Int8Array.from(deltas.map(({ x, y }) => [x, y]).flat());
 	fs.writeFile(destPath, Buffer.from(outputArray), (err) => {
 		if (err) throw err;
-		console.log('Done.', { outputArray, a: outputArray[outputArray.length - 1] });	
 	});	
 
 });
