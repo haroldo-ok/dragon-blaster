@@ -135,6 +135,25 @@ char fire_player_shot() {
 	return fired;
 }
 
+void init_enemies() {
+	init_actor(&enemy, 8, 0, 2, 1, 66, 1);
+	enemy.path = (path_step *) path1_path;
+}
+
+void handle_enemies() {
+	move_actor(&enemy);
+	if (enemy.x < -8 || enemy.x > 255 || enemy.y < -16 || enemy.y > 192) {
+		enemy.x = 8;
+		enemy.y = 0;
+		enemy.path = (path_step *) path1_path;
+		enemy.curr_step = 0;
+	}
+}
+
+void draw_enemies() {
+	draw_actor(&enemy);
+}
+
 void main() {
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
@@ -150,29 +169,20 @@ void main() {
 	player.animation_delay = 20;
 	ply_ctl.shot_delay = 0;
 	ply_ctl.shot_type = 0;
-	
+
+	init_enemies();
 	init_player_shots();
 
-	init_actor(&enemy, 8, 0, 2, 1, 66, 1);
-	enemy.path = (path_step *) path1_path;
 	
 	while (1) {	
 		handle_player_input();
-		
-		move_actor(&enemy);
-		if (enemy.x < -8 || enemy.x > 255 || enemy.y < -16 || enemy.y > 192) {
-			enemy.x = 8;
-			enemy.y = 0;
-			enemy.path = (path_step *) path1_path;
-			enemy.curr_step = 0;
-		}
-		
+		handle_enemies();
 		handle_player_shots();
 	
 		SMS_initSprites();
 
 		draw_actor(&player);
-		draw_actor(&enemy);
+		draw_enemies();
 		draw_player_shots();
 		
 		SMS_finalizeSprites();
