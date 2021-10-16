@@ -17,7 +17,7 @@
 #define PLAYER_SHOT_MAX (16)
 #define FOR_EACH_PLAYER_SHOT(sht) sht = player_shots; for (int i = PLAYER_SHOT_MAX; i; i--, sht++)
 
-#define ENEMY_MAX (4)
+#define ENEMY_MAX (3)
 #define FOR_EACH_ENEMY(enm) enm = enemies; for (int i = ENEMY_MAX; i; i--, enm++)
 
 actor player;
@@ -36,7 +36,7 @@ struct enemy_spawner {
 } enemy_spawner;
 
 void load_standard_palettes() {
-	SMS_loadBGPalette(sprites_palette_bin);
+	SMS_loadBGPalette(background_palette_bin);
 	SMS_loadSpritePalette(sprites_palette_bin);
 	SMS_setSpritePaletteColor(0, 0);
 }
@@ -170,7 +170,7 @@ void handle_enemies() {
 	
 	FOR_EACH_ENEMY(enm) {
 		move_actor(enm);
-		move_actor(enm);
+		
 		if (enm->x < -8 || enm->x > 255 || enm->y < -16 || enm->y > 192) {
 			enm->x = 8;
 			enm->y = 0;
@@ -188,14 +188,37 @@ void draw_enemies() {
 	}
 }
 
+void draw_background() {
+	unsigned int *ch = background_tilemap_bin;
+	
+	SMS_setNextTileatXY(0, 0);
+	for (char y = 0; y != 30; y++) {
+		// Repeat pattern every two lines
+		if (!(y & 0x01)) {
+			ch = background_tilemap_bin;
+		}
+		
+		for (char x = 0; x != 32; x++) {
+			unsigned int tile_number = *ch + 256;
+			SMS_setTile(tile_number);
+			ch++;
+		}
+	}
+}
+
 void main() {
+	int scroll_y = 0;
+	
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
 	SMS_VDPturnOnFeature(VDPFEATURE_HIDEFIRSTCOL);
 
 	SMS_displayOff();
 	SMS_loadPSGaidencompressedTiles(sprites_tiles_psgcompr, 0);
+	SMS_loadPSGaidencompressedTiles(background_tiles_psgcompr, 256);
 	load_standard_palettes();
+	
+	draw_background();
 
 	SMS_displayOn();
 	
@@ -222,6 +245,10 @@ void main() {
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
 		SMS_copySpritestoSAT();
+		
+		SMS_setBGScrollY(scroll_y);
+		scroll_y--;
+		if (scroll_y-- < 0) scroll_y += 240;
 	}
 }
 
