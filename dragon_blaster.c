@@ -30,6 +30,7 @@ actor player;
 actor player_shots[PLAYER_SHOT_MAX];
 actor enemies[ENEMY_MAX];
 actor icons[2];
+actor powerup;
 
 struct ply_ctl {
 	char shot_delay;
@@ -216,11 +217,32 @@ void draw_background() {
 void init_powerups() {
 	init_actor(icons, 256 - 32 - 8, 8, 2, 1, POWERUP_LIGHTINING_TILE, 1);	
 	init_actor(icons + 1, 256 - 16 - 8, 8, 2, 1, POWERUP_FIRE_TILE, 1);	
+
+	init_actor(&powerup, 0, 0, 2, 1, POWERUP_LIGHTINING_TILE, 2);
+	powerup.active = 0;
+}
+
+void handle_powerups() {
+	if (!powerup.active) {
+		powerup.x = 8 + rand() % (256 - 24);
+		powerup.y = -16;
+		powerup.active = 1;
+		powerup.state = 1 + rand() % 3;
+		switch (powerup.state) {
+		case 1: powerup.base_tile = POWERUP_LIGHTINING_TILE; break;
+		case 2: powerup.base_tile = POWERUP_FIRE_TILE; break;
+		case 3: powerup.base_tile = POWERUP_WIND_TILE; break;
+		}
+	}	
+
+	powerup.y++;
+	if (powerup.y > SCREEN_H) powerup.active = 0;
 }
 
 void draw_powerups() {
 	draw_actor(icons);
-	draw_actor(icons + 1);
+	draw_actor(icons + 1);		
+	draw_actor(&powerup);
 }
 
 void main() {
@@ -252,6 +274,7 @@ void main() {
 	while (1) {	
 		handle_player_input();
 		handle_enemies();
+		handle_powerups();
 		handle_player_shots();
 	
 		SMS_initSprites();
