@@ -19,10 +19,17 @@
 
 #define ENEMY_MAX (3)
 #define FOR_EACH_ENEMY(enm) enm = enemies; for (int i = ENEMY_MAX; i; i--, enm++)
+	
+#define POWERUP_BASE_TILE (100)
+#define POWERUP_LIGHTINING_TILE (POWERUP_BASE_TILE)
+#define POWERUP_FIRE_TILE (POWERUP_BASE_TILE + 8)
+#define POWERUP_WIND_TILE (POWERUP_BASE_TILE + 16)
+#define POWERUP_NONE_TILE (POWERUP_BASE_TILE + 24)
 
 actor player;
 actor player_shots[PLAYER_SHOT_MAX];
 actor enemies[ENEMY_MAX];
+actor icons[2];
 
 struct ply_ctl {
 	char shot_delay;
@@ -206,6 +213,16 @@ void draw_background() {
 	}
 }
 
+void init_powerups() {
+	init_actor(icons, 256 - 32 - 8, 8, 2, 1, POWERUP_LIGHTINING_TILE, 1);	
+	init_actor(icons + 1, 256 - 16 - 8, 8, 2, 1, POWERUP_FIRE_TILE, 1);	
+}
+
+void draw_powerups() {
+	draw_actor(icons);
+	draw_actor(icons + 1);
+}
+
 void main() {
 	int scroll_y = 0;
 	
@@ -229,6 +246,7 @@ void main() {
 
 	init_enemies();
 	init_player_shots();
+	init_powerups();
 
 	
 	while (1) {	
@@ -240,7 +258,8 @@ void main() {
 
 		draw_actor(&player);
 		draw_enemies();
-		draw_player_shots();
+		draw_powerups();
+		draw_player_shots();		
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
