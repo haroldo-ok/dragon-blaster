@@ -36,6 +36,8 @@ struct ply_ctl {
 	char shot_delay;
 	char shot_type;
 	char pressed_shot_selection;
+	
+	char powerup1, powerup2;
 } ply_ctl;
 
 struct enemy_spawner {
@@ -222,21 +224,40 @@ void init_powerups() {
 	powerup.active = 0;
 }
 
+char powerup_base_tile(char type) {
+	switch (type) {
+	case 1: return POWERUP_LIGHTINING_TILE;
+	case 2: return POWERUP_FIRE_TILE;
+	case 3: return POWERUP_WIND_TILE;
+	}
+	
+	return POWERUP_NONE_TILE;
+}
+
+void handle_icons() {
+	icons[0].base_tile = powerup_base_tile(ply_ctl.powerup1);
+	icons[1].base_tile = powerup_base_tile(ply_ctl.powerup2);
+}
+
 void handle_powerups() {
-	if (!powerup.active) {
+	powerup.y++;
+	if (powerup.y > SCREEN_H) powerup.active = 0;
+
+	if (powerup.active) {
+		// Check collision with player
+		if (powerup.x > player.x - 16 && powerup.x < player.x + 24 &&
+			powerup.y > player.y - 16 && powerup.y < player.y + 16) {
+			if (ply_ctl.powerup2) ply_ctl.powerup1 = ply_ctl.powerup2;
+			ply_ctl.powerup2 = powerup.state;
+			powerup.active = 0;			
+		}
+	} else {
 		powerup.x = 8 + rand() % (256 - 24);
 		powerup.y = -16;
 		powerup.active = 1;
 		powerup.state = 1 + rand() % 3;
-		switch (powerup.state) {
-		case 1: powerup.base_tile = POWERUP_LIGHTINING_TILE; break;
-		case 2: powerup.base_tile = POWERUP_FIRE_TILE; break;
-		case 3: powerup.base_tile = POWERUP_WIND_TILE; break;
-		}
+		powerup.base_tile = powerup_base_tile(powerup.state);
 	}	
-
-	powerup.y++;
-	if (powerup.y > SCREEN_H) powerup.active = 0;
 }
 
 void draw_powerups() {
@@ -265,6 +286,8 @@ void main() {
 	player.animation_delay = 20;
 	ply_ctl.shot_delay = 0;
 	ply_ctl.shot_type = 0;
+	ply_ctl.powerup1 = 1;
+	ply_ctl.powerup2 = 0;
 
 	init_enemies();
 	init_player_shots();
@@ -274,6 +297,7 @@ void main() {
 	while (1) {	
 		handle_player_input();
 		handle_enemies();
+		handle_icons();
 		handle_powerups();
 		handle_player_shots();
 	

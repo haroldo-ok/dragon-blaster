@@ -192,5 +192,5 @@ const shot_info player_shot_infos[PLAYER_SHOT_TYPE_COUNT] = {
 	{40, 2, 45, 12, 4, tempest_paths},
 	{50, 2, 45, 4, 1, firebolt_paths},
 	{54, 2, 45, 9, 3, thunderstorm_paths},
-	{54, 2, 35, 9, 1, ball_lightining_paths},
+	{32, 2, 35, 9, 1, ball_lightining_paths},
 };
