@@ -25,6 +25,9 @@
 #define POWERUP_FIRE_TILE (POWERUP_BASE_TILE + 8)
 #define POWERUP_WIND_TILE (POWERUP_BASE_TILE + 16)
 #define POWERUP_NONE_TILE (POWERUP_BASE_TILE + 24)
+#define POWERUP_LIGHTINING (1)
+#define POWERUP_FIRE (2)
+#define POWERUP_WIND (3)
 
 actor player;
 actor player_shots[PLAYER_SHOT_MAX];
@@ -38,6 +41,7 @@ struct ply_ctl {
 	char pressed_shot_selection;
 	
 	char powerup1, powerup2;
+	char powerup1_active, powerup2_active;
 } ply_ctl;
 
 struct enemy_spawner {
@@ -52,6 +56,54 @@ void load_standard_palettes() {
 }
 
 char fire_player_shot();
+
+void select_combined_powerup() {
+	switch (ply_ctl.powerup1) {
+	case POWERUP_LIGHTINING:
+		switch (ply_ctl.powerup2) {
+		case POWERUP_LIGHTINING: ply_ctl.shot_type = 3; break; // Thunderstrike
+		case POWERUP_FIRE: ply_ctl.shot_type = 6; break; // Firebolt
+		case POWERUP_WIND: ply_ctl.shot_type = 7; break; // Thunderstorm
+		}
+		break;
+	
+	case POWERUP_FIRE:
+		switch (ply_ctl.powerup2) {
+		case POWERUP_LIGHTINING: ply_ctl.shot_type = 6; break; // Firebolt
+		case POWERUP_FIRE: ply_ctl.shot_type = 4; break; // Hellfire
+		case POWERUP_WIND: ply_ctl.shot_type = 8; break; // Firestorm
+		}
+		break;
+
+	case POWERUP_WIND:
+		switch (ply_ctl.powerup2) {
+		case POWERUP_LIGHTINING: ply_ctl.shot_type = 7; break; // Thunderstorm
+		case POWERUP_FIRE: ply_ctl.shot_type = 8; break; // Firestorm
+		case POWERUP_WIND: ply_ctl.shot_type = 5; break; // Tempest
+		}
+		break;
+
+	}
+}
+
+void switch_powerup() {
+	if (ply_ctl.powerup1_active && ply_ctl.powerup2_active) {
+		// Only the first powerup will be active
+		ply_ctl.powerup1_active = 1;
+		ply_ctl.powerup2_active = 0;
+		ply_ctl.shot_type = ply_ctl.powerup1 - 1;
+	} else if (ply_ctl.powerup1_active) {
+		// Only the second powerup will be active
+		ply_ctl.powerup1_active = 0;
+		ply_ctl.powerup2_active = 1;
+		ply_ctl.shot_type = ply_ctl.powerup2 - 1;
+	} else {
+		// Both powerups will be active
+		ply_ctl.powerup1_active = 1;
+		ply_ctl.powerup2_active = 1;
+		select_combined_powerup();
+	}
+}
 
 void handle_player_input() {
 	static unsigned char joy;	
@@ -78,9 +130,8 @@ void handle_player_input() {
 	}
 	
 	if (joy & PORT_A_KEY_1) {
-		if (!ply_ctl.pressed_shot_selection) {
-			ply_ctl.shot_type++;
-			if (ply_ctl.shot_type >= PLAYER_SHOT_TYPE_COUNT) ply_ctl.shot_type = 0;
+		if (!ply_ctl.pressed_shot_selection && ply_ctl.powerup2) {
+			switch_powerup();
 			ply_ctl.pressed_shot_selection = 1;
 		}
 	} else {
@@ -226,17 +277,24 @@ void init_powerups() {
 
 char powerup_base_tile(char type) {
 	switch (type) {
-	case 1: return POWERUP_LIGHTINING_TILE;
-	case 2: return POWERUP_FIRE_TILE;
-	case 3: return POWERUP_WIND_TILE;
+	case POWERUP_LIGHTINING: return POWERUP_LIGHTINING_TILE;
+	case POWERUP_FIRE: return POWERUP_FIRE_TILE;
+	case POWERUP_WIND: return POWERUP_WIND_TILE;
 	}
 	
 	return POWERUP_NONE_TILE;
 }
 
 void handle_icons() {
-	icons[0].base_tile = powerup_base_tile(ply_ctl.powerup1);
-	icons[1].base_tile = powerup_base_tile(ply_ctl.powerup2);
+	static int tile;
+	
+	tile = powerup_base_tile(ply_ctl.powerup1);
+	if (!ply_ctl.powerup1_active) tile += 4;
+	icons[0].base_tile = tile;
+	
+	tile = powerup_base_tile(ply_ctl.powerup2);
+	if (ply_ctl.powerup2 && !ply_ctl.powerup2_active) tile += 4;
+	icons[1].base_tile = tile;
 }
 
 void handle_powerups() {
@@ -247,8 +305,25 @@ void handle_powerups() {
 		// Check collision with player
 		if (powerup.x > player.x - 16 && powerup.x < player.x + 24 &&
 			powerup.y > player.y - 16 && powerup.y < player.y + 16) {
-			if (ply_ctl.powerup2) ply_ctl.powerup1 = ply_ctl.powerup2;
-			ply_ctl.powerup2 = powerup.state;
+			if (!ply_ctl.powerup2) {
+				// Second is absent
+				ply_ctl.powerup2 = powerup.state;
+			} else  if (!ply_ctl.powerup1_active) {
+				// First is inactive
+				ply_ctl.powerup1 = powerup.state;
+			} else if (!ply_ctl.powerup2_active) {
+				// Second is inactive
+				ply_ctl.powerup2 = powerup.state;
+			} else {
+				// Both are active
+				ply_ctl.powerup1 = ply_ctl.powerup2;
+				ply_ctl.powerup2 = powerup.state;				
+			}
+			
+			ply_ctl.powerup1_active = 1;
+			ply_ctl.powerup2_active = 1;
+			select_combined_powerup();
+			
 			powerup.active = 0;			
 		}
 	} else {
@@ -288,6 +363,8 @@ void main() {
 	ply_ctl.shot_type = 0;
 	ply_ctl.powerup1 = 1;
 	ply_ctl.powerup2 = 0;
+	ply_ctl.powerup1_active = 1;
+	ply_ctl.powerup2_active = 0;
 
 	init_enemies();
 	init_player_shots();

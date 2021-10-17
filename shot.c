@@ -184,13 +184,13 @@ const path ball_lightining_paths[] = {
 
 
 const shot_info player_shot_infos[PLAYER_SHOT_TYPE_COUNT] = {
-	{26, 3, 45, 4, 1, lightining_paths},
-	{32, 4, 40, 8, 1, fire_paths},
-	{40, 2, 45, 12, 3, wind_paths},
-	{44, 3, 45, 4, 1, lightining_paths},
-	{32, 4, 55, 8, 1, hellfire_paths},
-	{40, 2, 45, 12, 4, tempest_paths},
-	{50, 2, 45, 4, 1, firebolt_paths},
-	{54, 2, 45, 9, 3, thunderstorm_paths},
-	{32, 2, 35, 9, 1, ball_lightining_paths},
+	{26, 3, 45, 4, 1, lightining_paths}, // 0
+	{32, 4, 40, 8, 1, fire_paths}, // 1
+	{40, 2, 45, 12, 3, wind_paths}, // 2
+	{44, 3, 45, 4, 1, lightining_paths}, // 3
+	{32, 4, 55, 8, 1, hellfire_paths}, // 4
+	{40, 2, 45, 12, 4, tempest_paths}, // 5
+	{50, 2, 45, 4, 1, firebolt_paths}, // 6
+	{54, 2, 45, 9, 3, thunderstorm_paths}, // 7
+	{32, 2, 35, 9, 1, ball_lightining_paths}, // 8
 };
