@@ -3,8 +3,10 @@
 
 #define SCREEN_W (256)
 #define SCREEN_H (192)
+#define SCROLL_H (224)
 #define SCREEN_CHAR_W (32)
 #define SCREEN_CHAR_H (24)
+#define SCROLL_CHAR_H (28)
 
 
 typedef union _fixed {
