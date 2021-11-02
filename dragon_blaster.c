@@ -353,17 +353,12 @@ void init_map() {
 	map_data.lines_before_next = 0;
 }
 
-void draw_map() {
+void draw_map_row() {
 	static char i, j;
 	static char y;
 	static char *map_char;
 	static unsigned int base_tile, tile;
-	
-	if (map_data.lines_before_next) {
-		map_data.lines_before_next--;
-		return;
-	}
-	
+
 	for (i = 2, y = map_data.background_y, base_tile = 256; i; i--, y++, base_tile++) {
 		SMS_setNextTileatXY(0, y);
 		for (j = 16, map_char = map_data.next_row; j; j--, map_char++) {
@@ -382,6 +377,23 @@ void draw_map() {
 	map_data.lines_before_next = 15;
 }
 
+void draw_map_screen() {
+	map_data.background_y = SCREEN_CHAR_H - 2;
+	
+	while (map_data.background_y < SCREEN_CHAR_H) {
+		draw_map_row();
+	}
+	draw_map_row();
+}
+
+void draw_map() {
+	if (map_data.lines_before_next) {
+		map_data.lines_before_next--;
+	} else {
+		draw_map_row();
+	}
+}
+
 void main() {
 	int scroll_y = 0;
 	
@@ -395,7 +407,7 @@ void main() {
 	load_standard_palettes();
 	
 	init_map();
-	draw_background();
+	draw_map_screen();
 
 	SMS_displayOn();
 	
