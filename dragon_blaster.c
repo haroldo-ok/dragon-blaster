@@ -49,6 +49,12 @@ struct enemy_spawner {
 	char next;
 } enemy_spawner;
 
+struct map_data {
+	char *next_row;
+	char background_y;
+	char lines_before_next;
+} map_data;
+
 void load_standard_palettes() {
 	SMS_loadBGPalette(tileset_palette_bin);
 	SMS_loadSpritePalette(sprites_palette_bin);
@@ -341,6 +347,41 @@ void draw_powerups() {
 	draw_actor(&powerup);
 }
 
+void init_map() {
+	map_data.next_row = level1_bin;
+	map_data.background_y = 0;
+	map_data.lines_before_next = 0;
+}
+
+void draw_map() {
+	static char i, j;
+	static char y;
+	static char *map_char;
+	static unsigned int base_tile, tile;
+	
+	if (map_data.lines_before_next) {
+		map_data.lines_before_next--;
+		return;
+	}
+	
+	for (i = 2, y = map_data.background_y, base_tile = 256; i; i--, y++, base_tile++) {
+		SMS_setNextTileatXY(0, y);
+		for (j = 16, map_char = map_data.next_row; j; j--, map_char++) {
+			tile = base_tile + (*map_char << 2);
+			SMS_setTile(tile);
+			SMS_setTile(tile + 2);
+		}
+	}
+	
+	map_data.next_row += 16;
+	if (map_data.background_y) {
+		map_data.background_y -= 2;
+	} else {
+		map_data.background_y = SCROLL_CHAR_H - 2;
+	}
+	map_data.lines_before_next = 16;
+}
+
 void main() {
 	int scroll_y = 0;
 	
@@ -353,6 +394,7 @@ void main() {
 	SMS_loadPSGaidencompressedTiles(tileset_tiles_psgcompr, 256);
 	load_standard_palettes();
 	
+	init_map();
 	draw_background();
 
 	SMS_displayOn();
@@ -369,7 +411,6 @@ void main() {
 	init_enemies();
 	init_player_shots();
 	init_powerups();
-
 	
 	while (1) {	
 		handle_player_input();
@@ -388,6 +429,8 @@ void main() {
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
 		SMS_copySpritestoSAT();
+		
+		draw_map();
 		
 		SMS_setBGScrollY(scroll_y);
 		scroll_y--;
