@@ -349,7 +349,7 @@ void draw_powerups() {
 
 void init_map() {
 	map_data.next_row = level1_bin;
-	map_data.background_y = 0;
+	map_data.background_y = SCROLL_CHAR_H - 2;
 	map_data.lines_before_next = 0;
 }
 
@@ -379,7 +379,7 @@ void draw_map() {
 	} else {
 		map_data.background_y = SCROLL_CHAR_H - 2;
 	}
-	map_data.lines_before_next = 16;
+	map_data.lines_before_next = 15;
 }
 
 void main() {
@@ -434,7 +434,7 @@ void main() {
 		
 		SMS_setBGScrollY(scroll_y);
 		scroll_y--;
-		if (scroll_y-- < 0) scroll_y += 240;
+		if (scroll_y < 0) scroll_y += SCROLL_H;
 	}
 }
 
