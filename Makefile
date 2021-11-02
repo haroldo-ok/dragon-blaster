@@ -3,7 +3,8 @@ OBJS := data.rel actor.rel shot.rel dragon_blaster.rel
 
 all: $(PRJNAME).sms
 
-data.c: data/* data/sprites_tiles.psgcompr data/tileset_tiles.psgcompr data/background_tiles.psgcompr data/path1.path
+data.c: data/* data/sprites_tiles.psgcompr data/tileset_tiles.psgcompr data/background_tiles.psgcompr \
+		data/path1.path data/level1.bin
 	folder2c data data
 	
 data/sprites_tiles.psgcompr: data/img/sprites.png
@@ -17,6 +18,9 @@ data/background_tiles.psgcompr: data/img/background.png
 	
 data/path1.path: data/path/path1.spline.json
 	node tool/convert_splines.js data/path/path1.spline.json data/path1.path
+
+data/level1.bin: data/map/level1.tmx
+	node tool/convert_map.js data/map/level1.tmx data/level1.bin
 	
 %.vgm: %.wav
 	psgtalk -r 512 -u 1 -m vgm $<
