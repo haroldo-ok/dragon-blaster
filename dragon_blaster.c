@@ -50,7 +50,7 @@ struct enemy_spawner {
 } enemy_spawner;
 
 void load_standard_palettes() {
-	SMS_loadBGPalette(background_palette_bin);
+	SMS_loadBGPalette(tileset_palette_bin);
 	SMS_loadSpritePalette(sprites_palette_bin);
 	SMS_setSpritePaletteColor(0, 0);
 }
@@ -350,7 +350,7 @@ void main() {
 
 	SMS_displayOff();
 	SMS_loadPSGaidencompressedTiles(sprites_tiles_psgcompr, 0);
-	SMS_loadPSGaidencompressedTiles(background_tiles_psgcompr, 256);
+	SMS_loadPSGaidencompressedTiles(tileset_tiles_psgcompr, 256);
 	load_standard_palettes();
 	
 	draw_background();
