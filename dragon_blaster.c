@@ -371,6 +371,11 @@ void draw_map_row() {
 	}
 	
 	map_data.next_row += 16;
+	if (*map_data.next_row == 0xFF) {
+		// Reached the end of the map; reset
+		map_data.next_row = level1_bin;
+	}
+	
 	if (map_data.background_y) {
 		map_data.background_y -= 2;
 	} else {
@@ -449,6 +454,8 @@ void main() {
 		SMS_waitForVBlank();
 		SMS_copySpritestoSAT();
 		
+		// Scroll two lines per frame
+		draw_map();		
 		draw_map();		
 	}
 }
