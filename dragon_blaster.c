@@ -53,6 +53,7 @@ struct map_data {
 	char *next_row;
 	char background_y;
 	char lines_before_next;
+	char scroll_y;
 } map_data;
 
 void load_standard_palettes() {
@@ -351,6 +352,7 @@ void init_map() {
 	map_data.next_row = level1_bin;
 	map_data.background_y = SCROLL_CHAR_H - 2;
 	map_data.lines_before_next = 0;
+	map_data.scroll_y = 0;
 }
 
 void draw_map_row() {
@@ -392,11 +394,16 @@ void draw_map() {
 	} else {
 		draw_map_row();
 	}
+
+	SMS_setBGScrollY(map_data.scroll_y);
+	if (map_data.scroll_y) {
+		map_data.scroll_y--;
+	} else {
+		map_data.scroll_y = SCROLL_H - 1;
+	}
 }
 
-void main() {
-	int scroll_y = 0;
-	
+void main() {	
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
 	SMS_VDPturnOnFeature(VDPFEATURE_HIDEFIRSTCOL);
@@ -442,11 +449,7 @@ void main() {
 		SMS_waitForVBlank();
 		SMS_copySpritestoSAT();
 		
-		draw_map();
-		
-		SMS_setBGScrollY(scroll_y);
-		scroll_y--;
-		if (scroll_y < 0) scroll_y += SCROLL_H;
+		draw_map();		
 	}
 }
 
