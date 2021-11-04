@@ -1,5 +1,5 @@
 PRJNAME := dragon_blaster
-OBJS := data.rel actor.rel shot.rel dragon_blaster.rel
+OBJS := data.rel actor.rel shot.rel map.rel dragon_blaster.rel
 
 all: $(PRJNAME).sms
 
