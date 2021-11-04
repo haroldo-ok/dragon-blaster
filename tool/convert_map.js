@@ -33,7 +33,23 @@ tmx.parseFile(sourcePath, function(err, map) {
 		rows.push(row);
 	}
 	
-	const outputArray = Int8Array.from([...rows.slice().reverse().flat(), 255]);
+	const uncompressed = rows.slice().reverse();
+	const compressed = uncompressed.map(row => {
+		return row
+			.reduce((groups, tile) => {
+				const lastGroup = groups[groups.length - 1];
+				if (lastGroup && lastGroup.tile === tile) {
+					lastGroup.count++;
+				} else {
+					groups.push({ tile, count: 1 });
+				}
+				return groups;
+			}, [])
+			.map(({ tile, count }) => count > 1 ? [ 0x80 | count, tile ] : [ tile ])
+			.flat();
+	});
+	
+	const outputArray = Int8Array.from([...compressed.flat(), 255]);
 	fs.writeFile(destPath, Buffer.from(outputArray), (err) => {
 		if (err) throw err;
 	});	
