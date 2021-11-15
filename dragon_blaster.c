@@ -147,6 +147,12 @@ void handle_player_input() {
 	}
 	
 	if (ply_ctl.shot_delay) ply_ctl.shot_delay--;
+	if (ply_ctl.death_delay) ply_ctl.death_delay--;
+
+}
+
+void draw_player() {
+	if (!(ply_ctl.death_delay & 0x08)) draw_actor(&player);
 }
 
 void init_player_shots() {
@@ -457,7 +463,7 @@ void main() {
 	
 		SMS_initSprites();
 
-		draw_actor(&player);
+		draw_player();
 		draw_enemies();
 		draw_powerups();
 		draw_player_shots();		
