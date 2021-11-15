@@ -8,6 +8,10 @@
 #define SCREEN_CHAR_H (24)
 #define SCROLL_CHAR_H (28)
 
+#define PATH_FLIP_X (0x01)
+#define PATH_FLIP_Y (0x02)
+#define PATH_2X_SPEED (0x04)
+
 
 typedef union _fixed {
   struct {
@@ -41,6 +45,7 @@ typedef struct actor {
 	unsigned char base_tile, frame_count;
 	unsigned char frame, frame_increment, frame_max;
 	
+	char path_flags;
 	path_step *path, *curr_step;
 	
 	unsigned char state;
@@ -55,5 +60,6 @@ void move_actor(actor *act);
 void draw_actor(actor *act);
 
 void wait_frames(int wait_time);
+void clear_sprites();
 
 #endif /* ACTOR_H */
