@@ -204,6 +204,44 @@ char fire_player_shot() {
 	return fired;
 }
 
+actor *check_collision_against_shots(actor *_act) {
+	static actor *act, *sht;
+	static int act_x, act_y;
+	static int sht_x, sht_y;
+	
+	act = _act;
+	act_x = act->x;
+	act_y = act->y;
+	FOR_EACH_PLAYER_SHOT(sht) {
+		if (sht->active) {
+			sht_x = sht->x;
+			sht_y = sht->y;
+			if (sht_x > act_x - 8 && sht_x < act_x + 16 &&
+				sht_y > act_y - 16 && sht_y < act_y + 16) {
+				return sht;
+			}
+		}		
+	}	
+	
+	return 0;
+}
+
+char is_colliding_against_player(actor *_act) {
+	static actor *act;
+	static int act_x, act_y;
+	
+	act = _act;
+	act_x = act->x;
+	act_y = act->y;
+	
+	if (player.x > act_x - 12 && player.x < act_x + 12 &&
+		player.y > act_y - 12 && player.y < act_y + 12) {
+		return 1;
+	}
+	
+	return 0;
+}
+
 void init_enemies() {
 	static actor *enm;
 	
@@ -216,7 +254,7 @@ void init_enemies() {
 }
 
 void handle_enemies() {
-	static actor *enm;
+	static actor *enm, *sht;
 	
 	if (enemy_spawner.delay) {
 		enemy_spawner.delay--;
@@ -233,11 +271,23 @@ void handle_enemies() {
 	FOR_EACH_ENEMY(enm) {
 		move_actor(enm);
 		
-		if (enm->x < -8 || enm->x > 255 || enm->y < -16 || enm->y > 192) {
+		if (enm->x < -32 || enm->x > 287 || enm->y < -16 || enm->y > 192) {
 			enm->x = 8;
 			enm->y = 0;
 			enm->path = (path_step *) path1_path;
 			enm->curr_step = 0;
+		}
+
+		if (enm->active) {
+			sht = check_collision_against_shots(enm);
+			if (sht) {
+				sht->active = 0;
+				enm->active = 0;
+			}
+			
+			if (is_colliding_against_player(enm)) {
+				enm->active = 0;
+			}
 		}
 	}	
 }
