@@ -43,11 +43,18 @@ struct ply_ctl {
 	
 	char powerup1, powerup2;
 	char powerup1_active, powerup2_active;
+
+	char death_delay;
 } ply_ctl;
 
 struct enemy_spawner {
+	char type;
+	char x;
+	char flags;
 	char delay;
 	char next;
+	path_step *path;
+	char all_dead;
 } enemy_spawner;
 
 void load_standard_palettes() {
@@ -244,7 +251,8 @@ char is_colliding_against_player(actor *_act) {
 
 void init_enemies() {
 	static actor *enm;
-	
+
+	enemy_spawner.x = 0;	
 	enemy_spawner.delay = 0;
 	enemy_spawner.next = 0;
 	
@@ -254,28 +262,39 @@ void init_enemies() {
 }
 
 void handle_enemies() {
-	static actor *enm, *sht;
+	static actor *enm, *sht;	
 	
 	if (enemy_spawner.delay) {
 		enemy_spawner.delay--;
 	} else if (enemy_spawner.next != ENEMY_MAX) {
+		if (!enemy_spawner.x) {
+			enemy_spawner.type = rand() & 1;
+			enemy_spawner.x = 8 + rand() % 124;
+			enemy_spawner.flags = 0;
+			enemy_spawner.path = (path_step *) path1_path;
+			if (rand() & 1) {
+				enemy_spawner.x += 124;
+				enemy_spawner.flags |= PATH_FLIP_X;
+			}
+		}
+		
 		enm = enemies + enemy_spawner.next;
 		
-		init_actor(enm, 8, 0, 2, 1, 66, 1);
-		enm->path = (path_step *) path1_path;
+		init_actor(enm, enemy_spawner.x, 0, 2, 1, 66, 1);
+		enm->path_flags = enemy_spawner.flags;
+		enm->path = enemy_spawner.path;
+		enm->state = enemy_spawner.type;
 
 		enemy_spawner.delay = 10;
 		enemy_spawner.next++;
 	}
 	
+	enemy_spawner.all_dead = 1;
 	FOR_EACH_ENEMY(enm) {
 		move_actor(enm);
 		
 		if (enm->x < -32 || enm->x > 287 || enm->y < -16 || enm->y > 192) {
-			enm->x = 8;
-			enm->y = 0;
-			enm->path = (path_step *) path1_path;
-			enm->curr_step = 0;
+			enm->active = 0;
 		}
 
 		if (enm->active) {
@@ -285,11 +304,19 @@ void handle_enemies() {
 				enm->active = 0;
 			}
 			
-			if (is_colliding_against_player(enm)) {
+			if (!ply_ctl.death_delay && is_colliding_against_player(enm)) {
 				enm->active = 0;
+				ply_ctl.death_delay = 60;
 			}
 		}
+		
+		if (enm->active) enemy_spawner.all_dead = 0;
 	}	
+	
+	if (enemy_spawner.all_dead) {
+		enemy_spawner.x = 0;
+		enemy_spawner.next = 0;
+	}
 }
 
 void draw_enemies() {
@@ -415,6 +442,7 @@ void main() {
 	ply_ctl.powerup2 = 0;
 	ply_ctl.powerup1_active = 1;
 	ply_ctl.powerup2_active = 0;
+	ply_ctl.death_delay = 0;
 
 	init_enemies();
 	init_player_shots();
