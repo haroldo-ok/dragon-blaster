@@ -11,11 +11,17 @@
 
 actor player_shots[PLAYER_SHOT_MAX];
 
+// Store which rows contain player shots, in order to speed up collision checks.
 char player_shots_collision_rows[SCREEN_CHAR_H];
 #define player_shots_collision_rows_end (player_shots_collision_rows + SCREEN_CHAR_H)
 
-void clear_player_shots_collision_rows() {
+// Store which columns contain player shots, in order to speed up collision checks.
+char player_shots_collision_cols[SCREEN_CHAR_W];
+#define player_shots_collision_cols_end (player_shots_collision_cols + SCREEN_CHAR_W)
+
+void clear_player_shots_collision() {
 	memset(player_shots_collision_rows, 0, sizeof(player_shots_collision_rows));
+	memset(player_shots_collision_cols, 0, sizeof(player_shots_collision_cols));
 }
 
 void mark_player_shot_collision_row(int y) {
@@ -27,6 +33,16 @@ void mark_player_shot_collision_row(int y) {
 	if (ch > player_shots_collision_rows_end) return;
 	*ch = 1; ch++;
 	if (ch > player_shots_collision_rows_end) return;
+	*ch = 1;
+}
+
+void mark_player_shot_collision_col(int x) {
+	static char *ch;
+	
+	ch = player_shots_collision_cols + (x >> 3);
+	
+	*ch = 1; ch++;
+	if (ch > player_shots_collision_cols_end) return;
 	*ch = 1;
 }
 
@@ -55,6 +71,28 @@ char check_player_shot_collision_row(int y) {
 	return 0;
 }
 
+char check_player_shot_collision_col(int x) {
+	static char *ch;
+	
+	if (x < 0) return 0;
+	
+	ch = player_shots_collision_cols + (x >> 3);
+	
+	if (ch > player_shots_collision_cols_end) return 0;
+	if (*ch) return 1;
+	ch++;
+	if (ch > player_shots_collision_cols_end) return 0;
+	if (*ch) return 1;
+	ch++;
+	if (ch > player_shots_collision_cols_end) return 0;
+	if (*ch) return 1;
+	ch++;
+	if (ch > player_shots_collision_cols_end) return 0;
+	if (*ch) return 1;
+	
+	return 0;
+}
+
 void init_player_shots() {
 	static actor *sht;
 	
@@ -62,19 +100,22 @@ void init_player_shots() {
 		sht->active = 0;
 	}
 	
-	clear_player_shots_collision_rows();
+	clear_player_shots_collision();
 }
 
 void handle_player_shots() {
 	static actor *sht;
 	
-	clear_player_shots_collision_rows();
+	clear_player_shots_collision();
 	FOR_EACH_PLAYER_SHOT(sht) {
 		if (sht->active) {
 			move_actor(sht);
 			if (sht->y < 0 || sht->y > (SCREEN_H - 16)) sht->active = 0;
 			if (sht->state == 1 && !sht->state_timer) sht->active = 0;
-			if (sht->active) mark_player_shot_collision_row(sht->y);
+			if (sht->active) {
+				mark_player_shot_collision_col(sht->x);
+				mark_player_shot_collision_row(sht->y);
+			}
 		}
 	}
 }
@@ -127,10 +168,13 @@ actor *check_collision_against_shots(actor *_act) {
 	static int sht_x, sht_y;
 	
 	act = _act;
+
+	act_x = act->x;	
+	if (!check_player_shot_collision_col(act_x)) return 0;
+
 	act_y = act->y;	
 	if (!check_player_shot_collision_row(act_y)) return 0;
 	
-	act_x = act->x;	
 	FOR_EACH_PLAYER_SHOT(sht) {
 		if (sht->active) {
 			sht_x = sht->x;
