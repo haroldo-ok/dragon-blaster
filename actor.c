@@ -67,8 +67,8 @@ void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char 
 
 void move_actor(actor *_act) {
 	static actor *act;
-	path_step *step, *curr_step;
-	char path_flags;
+	static path_step *step, *curr_step;
+	static char path_flags;
 	
 	if (!_act->active) {
 		return;
