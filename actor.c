@@ -65,35 +65,41 @@ void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char 
 	sa->state_timer = 256;
 }
 
-void move_actor(actor *act) {
-	static actor *_act;
-	static path_step *step;
-	static char path_flags;
+void move_actor(actor *_act) {
+	static actor *act;
+	path_step *step, *curr_step;
+	char path_flags;
 	
-	if (!act->active) {
+	if (!_act->active) {
 		return;
 	}
 	
-	_act = act;
+	act = _act;
 	
 	if (act->path) {
-		if (!act->curr_step) act->curr_step = act->path;
-		step = act->curr_step++;
-		if (step->x == -128) step = act->curr_step = act->path;
+		curr_step = act->curr_step;
+		
+		if (!curr_step) curr_step = act->path;
+		step = curr_step++;
+		if (step->x == -128) step = curr_step = act->path;
 		
 		path_flags = act->path_flags;
 		act->x += (path_flags & PATH_FLIP_X) ? -step->x : step->x;
 		act->y += (path_flags & PATH_FLIP_Y) ? -step->y : step->y;
 		
 		if (path_flags & PATH_2X_SPEED) {
-			step = act->curr_step++;
-			if (step->x == -128) step = act->curr_step = act->path;
+			step = curr_step++;
+			if (step->x == -128) step = curr_step = act->path;
+			
+			path_flags = act->path_flags;
 			act->x += (path_flags & PATH_FLIP_X) ? -step->x : step->x;
 			act->y += (path_flags & PATH_FLIP_Y) ? -step->y : step->y;
 		}
+
+		act->curr_step = curr_step;
 	}
 	
-	if (_act->state_timer) _act->state_timer--;
+	if (act->state_timer) act->state_timer--;
 }
 
 void draw_actor(actor *act) {
