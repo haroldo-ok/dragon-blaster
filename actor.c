@@ -105,6 +105,7 @@ void move_actor(actor *_act) {
 void draw_actor(actor *act) {
 	static actor *_act;
 	static unsigned char frame_tile;
+	static unsigned char frame;
 	
 	if (!act->active) {
 		return;
@@ -122,8 +123,11 @@ void draw_actor(actor *act) {
 	if (_act->animation_delay) {
 		_act->animation_delay--;
 	} else {
-		_act->frame += _act->frame_increment;
-		if (_act->frame >= _act->frame_max) _act->frame = 0;
+		frame = _act->frame;		
+		frame += _act->frame_increment;
+		if (frame >= _act->frame_max) frame = 0;		
+		_act->frame = frame;
+
 		_act->animation_delay = _act->animation_delay_max;
 	}
 }
