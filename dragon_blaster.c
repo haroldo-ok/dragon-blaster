@@ -5,6 +5,7 @@
 #include "lib/PSGlib.h"
 #include "actor.h"
 #include "shot.h"
+#include "shots.h"
 #include "map.h"
 #include "data.h"
 
@@ -13,10 +14,6 @@
 #define PLAYER_RIGHT (256 - 16)
 #define PLAYER_BOTTOM (SCREEN_H - 16)
 #define PLAYER_SPEED (3)
-
-#define PLAYER_SHOT_SPEED (4)
-#define PLAYER_SHOT_MAX (16)
-#define FOR_EACH_PLAYER_SHOT(sht) sht = player_shots; for (int i = PLAYER_SHOT_MAX; i; i--, sht++)
 
 #define ENEMY_MAX (3)
 #define FOR_EACH_ENEMY(enm) enm = enemies; for (int i = ENEMY_MAX; i; i--, enm++)
@@ -31,7 +28,6 @@
 #define POWERUP_WIND (3)
 
 actor player;
-actor player_shots[PLAYER_SHOT_MAX];
 actor enemies[ENEMY_MAX];
 actor icons[2];
 actor powerup;
@@ -62,8 +58,6 @@ void load_standard_palettes() {
 	SMS_loadSpritePalette(sprites_palette_bin);
 	SMS_setSpritePaletteColor(0, 0);
 }
-
-char fire_player_shot();
 
 void select_combined_powerup() {
 	switch (ply_ctl.powerup1) {
@@ -131,7 +125,7 @@ void handle_player_input() {
 	
 	if (joy & PORT_A_KEY_2) {
 		if (!ply_ctl.shot_delay) {
-			if (fire_player_shot()) {
+			if (fire_player_shot(&player, ply_ctl.shot_type)) {
 				ply_ctl.shot_delay = player_shot_infos[ply_ctl.shot_type].firing_delay;
 			}
 		}
@@ -153,90 +147,6 @@ void handle_player_input() {
 
 void draw_player() {
 	if (!(ply_ctl.death_delay & 0x08)) draw_actor(&player);
-}
-
-void init_player_shots() {
-	static actor *sht;
-	
-	FOR_EACH_PLAYER_SHOT(sht) {
-		sht->active = 0;
-	}
-}
-
-void handle_player_shots() {
-	static actor *sht;
-	
-	FOR_EACH_PLAYER_SHOT(sht) {
-		if (sht->active) {
-			move_actor(sht);
-			if (sht->y < 0) sht->active = 0;
-			if (sht->state == 1 && !sht->state_timer) sht->active = 0;
-		}
-	}
-}
-
-void draw_player_shots() {
-	static actor *sht;
-	
-	FOR_EACH_PLAYER_SHOT(sht) {
-		draw_actor(sht);
-	}
-}
-
-char fire_player_shot() {
-	static actor *sht;
-	static char shots_to_fire, fired;
-	static shot_info *info;
-	static path *path;
-	
-	info = player_shot_infos + ply_ctl.shot_type;
-	path = info->paths;
-	shots_to_fire = info->length;
-	fired = 0;
-	
-	FOR_EACH_PLAYER_SHOT(sht) {
-		if (!sht->active) {
-			init_actor(sht, 
-				player.x + path->x, player.y + path->y, 
-				1, 1, 
-				info->base_tile, info->frame_count);
-				
-			sht->path = path->steps;
-			sht->state = 1;
-			sht->state_timer = info->life_time;
-						
-			// Fired something
-			fired = 1;
-			path++;
-			shots_to_fire--;
-			if (!shots_to_fire)	return 1;
-		}
-	}
-
-	// Didn't fire anything
-	return fired;
-}
-
-actor *check_collision_against_shots(actor *_act) {
-	static actor *act, *sht;
-	static int act_x, act_y;
-	static int sht_x, sht_y;
-	
-	act = _act;
-	act_x = act->x;
-	act_y = act->y;
-	FOR_EACH_PLAYER_SHOT(sht) {
-		if (sht->active) {
-			sht_x = sht->x;
-			sht_y = sht->y;
-			if (sht_x > act_x - 8 && sht_x < act_x + 16 &&
-				sht_y > act_y - 16 && sht_y < act_y + 16) {
-				return sht;
-			}
-		}		
-	}	
-	
-	return 0;
 }
 
 char is_colliding_against_player(actor *_act) {
@@ -479,7 +389,7 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,6, 2021,11,15, "Haroldo-OK\\2021", "Dragon Blaster",
+SMS_EMBED_SDSC_HEADER(0,7, 2021,11,21, "Haroldo-OK\\2021", "Dragon Blaster",
   "A dragon-themed shoot-em-up.\n"
   "Made for the SHMUP JAM 1 - Dragons - https://itch.io/jam/shmup-jam-1-dragons\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");
