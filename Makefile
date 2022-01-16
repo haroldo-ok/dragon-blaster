@@ -16,11 +16,11 @@ data/tileset_tiles.psgcompr: data/img/tileset.png
 data/background_tiles.psgcompr: data/img/background.png
 	BMP2Tile.exe data/img/background.png -palsms -fullpalette -savetiles data/background_tiles.psgcompr -savetilemap data/background_tilemap.bin -savepalette data/background_palette.bin
 	
-data/path1.path: data/path/path1.spline.json
-	node tool/convert_splines.js data/path/path1.spline.json data/path1.path
+data/%.path: data/path/%.spline.json
+	node tool/convert_splines.js $< $@
 
-data/level1.bin: data/map/level1.tmx
-	node tool/convert_map.js data/map/level1.tmx data/level1.bin
+data/%.bin: data/map/%.tmx
+	node tool/convert_map.js $< $@
 	
 %.vgm: %.wav
 	psgtalk -r 512 -u 1 -m vgm $<
