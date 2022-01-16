@@ -7,6 +7,7 @@
 #include "shot.h"
 #include "shots.h"
 #include "map.h"
+#include "score.h"
 #include "data.h"
 
 #define PLAYER_TOP (0)
@@ -27,10 +28,17 @@
 #define POWERUP_FIRE (2)
 #define POWERUP_WIND (3)
 
+#define TIMER_MAX (60)
+
 actor player;
 actor enemies[ENEMY_MAX];
 actor icons[2];
 actor powerup;
+actor timer_label;
+actor time_over;
+
+score_display timer;
+score_display score;
 
 struct ply_ctl {
 	char shot_delay;
@@ -53,10 +61,27 @@ struct enemy_spawner {
 	char all_dead;
 } enemy_spawner;
 
+char timer_delay;
+char frames_elapsed;
+
 void load_standard_palettes() {
 	SMS_loadBGPalette(tileset_palette_bin);
 	SMS_loadSpritePalette(sprites_palette_bin);
 	SMS_setSpritePaletteColor(0, 0);
+}
+
+void update_score(actor *enm, actor *sht);
+
+void wait_button_press() {
+	do {
+		SMS_waitForVBlank();
+	} while (!(SMS_getKeysStatus() & (PORT_A_KEY_1 | PORT_A_KEY_2)));
+}
+
+void wait_button_release() {
+	do {
+		SMS_waitForVBlank();
+	} while (SMS_getKeysStatus() & (PORT_A_KEY_1 | PORT_A_KEY_2));
 }
 
 void select_combined_powerup() {
@@ -216,6 +241,7 @@ void handle_enemies() {
 		if (enm->active) {
 			sht = check_collision_against_shots(enm);
 			if (sht) {
+				update_score(enm, sht);
 				sht->active = 0;
 				enm->active = 0;
 			}
@@ -299,6 +325,8 @@ void handle_powerups() {
 		// Check collision with player
 		if (powerup.x > player.x - 16 && powerup.x < player.x + 24 &&
 			powerup.y > player.y - 16 && powerup.y < player.y + 16) {
+			update_score(&powerup, 0);
+
 			if (!ply_ctl.powerup2) {
 				// Second is absent
 				ply_ctl.powerup2 = powerup.state;
@@ -335,7 +363,48 @@ void draw_powerups() {
 	draw_actor(&powerup);
 }
 
-void main() {	
+void update_score(actor *enm, actor *sht) {
+	increment_score_display(&score, enm == &powerup ? 5 : 1);
+}
+
+void init_score() {
+	init_actor(&timer_label, 16, 8, 1, 1, 178, 1);
+	init_score_display(&timer, 24, 8, 236);
+	update_score_display(&timer, TIMER_MAX);
+	timer_delay = 60;
+	frames_elapsed = 0;
+	
+	init_score_display(&score, 16, 24, 236);
+}
+
+void handle_score() {
+	if (timer_delay) {
+		timer_delay--;
+	} else {
+		if (timer.value) {
+			char decrement = frames_elapsed / 60;
+			if (decrement > timer.value) decrement = timer.value;
+			increment_score_display(&timer, -decrement);
+		}
+		timer_delay = 60;
+		frames_elapsed = 0;
+	}
+}
+
+void draw_score() {
+	draw_actor(&timer_label);
+	draw_score_display(&timer);
+
+	draw_score_display(&score);
+}
+
+void interrupt_handler() {
+	PSGFrame();
+	PSGSFXFrame();
+	frames_elapsed++;
+}
+
+void gameplay_loop() {	
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
 	SMS_VDPturnOnFeature(VDPFEATURE_HIDEFIRSTCOL);
@@ -347,6 +416,10 @@ void main() {
 	
 	init_map(level1_bin);
 	draw_map_screen();
+
+	SMS_setLineInterruptHandler(&interrupt_handler);
+	SMS_setLineCounter(180);
+	SMS_enableLineInterrupt();
 
 	SMS_displayOn();
 	
@@ -363,20 +436,23 @@ void main() {
 	init_enemies();
 	init_player_shots();
 	init_powerups();
+	init_score();
 	
-	while (1) {	
+	while (timer.value) {	
 		handle_player_input();
 		handle_enemies();
 		handle_icons();
 		handle_powerups();
 		handle_player_shots();
+		handle_score();
 	
 		SMS_initSprites();
 
 		draw_player();
 		draw_enemies();
 		draw_powerups();
-		draw_player_shots();		
+		draw_player_shots();
+		draw_score();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
@@ -388,8 +464,47 @@ void main() {
 	}
 }
 
+void timeover_sequence() {
+	char timeover_delay = 128;
+	char pressed_button = 0;
+	
+	init_actor(&time_over, 107, 64, 6, 1, 180, 1);
+
+	while (timeover_delay || !pressed_button) {
+		SMS_initSprites();
+
+		if (!(timeover_delay & 0x10)) draw_actor(&time_over);
+		
+		draw_player();
+		draw_enemies();
+		draw_player_shots();
+		draw_score();
+		
+		SMS_finalizeSprites();
+		SMS_waitForVBlank();
+		SMS_copySpritestoSAT();
+		
+		draw_map();
+		
+		if (timeover_delay) {
+			timeover_delay--;
+		} else {
+			pressed_button = SMS_getKeysStatus() & (PORT_A_KEY_1 | PORT_A_KEY_2);
+		}
+	}
+	
+	wait_button_release();
+}
+
+void main() {	
+	while (1) {
+		gameplay_loop();
+		timeover_sequence();
+	}
+}
+
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,7, 2021,11,21, "Haroldo-OK\\2021", "Dragon Blaster",
+SMS_EMBED_SDSC_HEADER(0,8, 2022,01,16, "Haroldo-OK\\2022", "Dragon Blaster",
   "A dragon-themed shoot-em-up.\n"
   "Made for the SHMUP JAM 1 - Dragons - https://itch.io/jam/shmup-jam-1-dragons\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");
