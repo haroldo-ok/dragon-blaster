@@ -313,6 +313,8 @@ void handle_powerups() {
 		// Check collision with player
 		if (powerup.x > player.x - 16 && powerup.x < player.x + 24 &&
 			powerup.y > player.y - 16 && powerup.y < player.y + 16) {
+			update_score(&powerup, 0);
+
 			if (!ply_ctl.powerup2) {
 				// Second is absent
 				ply_ctl.powerup2 = powerup.state;
