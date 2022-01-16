@@ -386,6 +386,12 @@ void draw_score() {
 	draw_score_display(&score);
 }
 
+void interrupt_handler() {
+	PSGFrame();
+	PSGSFXFrame();
+	frames_elapsed++;
+}
+
 void main() {	
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
@@ -398,6 +404,10 @@ void main() {
 	
 	init_map(level1_bin);
 	draw_map_screen();
+
+	SMS_setLineInterruptHandler(&interrupt_handler);
+	SMS_setLineCounter(180);
+	SMS_enableLineInterrupt();
 
 	SMS_displayOn();
 	
