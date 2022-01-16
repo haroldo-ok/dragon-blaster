@@ -72,6 +72,18 @@ void load_standard_palettes() {
 
 void update_score(actor *enm, actor *sht);
 
+void wait_button_press() {
+	do {
+		SMS_waitForVBlank();
+	} while (!(SMS_getKeysStatus() & (PORT_A_KEY_1 | PORT_A_KEY_2)));
+}
+
+void wait_button_release() {
+	do {
+		SMS_waitForVBlank();
+	} while (SMS_getKeysStatus() & (PORT_A_KEY_1 | PORT_A_KEY_2));
+}
+
 void select_combined_powerup() {
 	switch (ply_ctl.powerup1) {
 	case POWERUP_LIGHTINING:
@@ -392,7 +404,7 @@ void interrupt_handler() {
 	frames_elapsed++;
 }
 
-void main() {	
+void gameplay_loop() {	
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
 	SMS_VDPturnOnFeature(VDPFEATURE_HIDEFIRSTCOL);
@@ -426,7 +438,7 @@ void main() {
 	init_powerups();
 	init_score();
 	
-	while (1) {	
+	while (timer.value) {	
 		handle_player_input();
 		handle_enemies();
 		handle_icons();
@@ -449,6 +461,45 @@ void main() {
 		// Scroll two lines per frame
 		draw_map();		
 		draw_map();		
+	}
+}
+
+void timeover_sequence() {
+	char timeover_delay = 128;
+	char pressed_button = 0;
+	
+	init_actor(&time_over, 107, 64, 6, 1, 180, 1);
+
+	while (timeover_delay || !pressed_button) {
+		SMS_initSprites();
+
+		if (!(timeover_delay & 0x10)) draw_actor(&time_over);
+		
+		draw_player();
+		draw_enemies();
+		draw_player_shots();
+		draw_score();
+		
+		SMS_finalizeSprites();
+		SMS_waitForVBlank();
+		SMS_copySpritestoSAT();
+		
+		draw_map();
+		
+		if (timeover_delay) {
+			timeover_delay--;
+		} else {
+			pressed_button = SMS_getKeysStatus() & (PORT_A_KEY_1 | PORT_A_KEY_2);
+		}
+	}
+	
+	wait_button_release();
+}
+
+void main() {	
+	while (1) {
+		gameplay_loop();
+		timeover_sequence();
 	}
 }
 
