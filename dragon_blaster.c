@@ -7,6 +7,7 @@
 #include "shot.h"
 #include "shots.h"
 #include "map.h"
+#include "score.h"
 #include "data.h"
 
 #define PLAYER_TOP (0)
@@ -27,10 +28,17 @@
 #define POWERUP_FIRE (2)
 #define POWERUP_WIND (3)
 
+#define TIMER_MAX (60)
+
 actor player;
 actor enemies[ENEMY_MAX];
 actor icons[2];
 actor powerup;
+actor timer_label;
+actor time_over;
+
+score_display timer;
+score_display score;
 
 struct ply_ctl {
 	char shot_delay;
@@ -53,11 +61,16 @@ struct enemy_spawner {
 	char all_dead;
 } enemy_spawner;
 
+char timer_delay;
+char frames_elapsed;
+
 void load_standard_palettes() {
 	SMS_loadBGPalette(tileset_palette_bin);
 	SMS_loadSpritePalette(sprites_palette_bin);
 	SMS_setSpritePaletteColor(0, 0);
 }
+
+void update_score(actor *enm, actor *sht);
 
 void select_combined_powerup() {
 	switch (ply_ctl.powerup1) {
@@ -335,6 +348,41 @@ void draw_powerups() {
 	draw_actor(&powerup);
 }
 
+void update_score(actor *enm, actor *sht) {
+	increment_score_display(&score, enm == &powerup ? 5 : 1);
+}
+
+void init_score() {
+	init_actor(&timer_label, 16, 8, 1, 1, 178, 1);
+	init_score_display(&timer, 24, 8, 236);
+	update_score_display(&timer, TIMER_MAX);
+	timer_delay = 60;
+	frames_elapsed = 0;
+	
+	init_score_display(&score, 16, 24, 236);
+}
+
+void handle_score() {
+	if (timer_delay) {
+		timer_delay--;
+	} else {
+		if (timer.value) {
+			char decrement = frames_elapsed / 60;
+			if (decrement > timer.value) decrement = timer.value;
+			increment_score_display(&timer, -decrement);
+		}
+		timer_delay = 60;
+		frames_elapsed = 0;
+	}
+}
+
+void draw_score() {
+	draw_actor(&timer_label);
+	draw_score_display(&timer);
+
+	draw_score_display(&score);
+}
+
 void main() {	
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
@@ -363,6 +411,7 @@ void main() {
 	init_enemies();
 	init_player_shots();
 	init_powerups();
+	init_score();
 	
 	while (1) {	
 		handle_player_input();
@@ -370,13 +419,15 @@ void main() {
 		handle_icons();
 		handle_powerups();
 		handle_player_shots();
+		handle_score();
 	
 		SMS_initSprites();
 
 		draw_player();
 		draw_enemies();
 		draw_powerups();
-		draw_player_shots();		
+		draw_player_shots();
+		draw_score();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
