@@ -147,6 +147,7 @@ char fire_player_shot(actor *player, char shot_type) {
 				info->base_tile, info->frame_count);
 				
 			sht->path = path->steps;
+			sht->path_flags = path->flags;
 			sht->state = 1;
 			sht->state_timer = info->life_time;
 						
