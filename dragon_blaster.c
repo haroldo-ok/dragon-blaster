@@ -229,6 +229,7 @@ void handle_enemies() {
 		if (enm->active) {
 			sht = check_collision_against_shots(enm);
 			if (sht) {
+				update_score(enm, sht);
 				sht->active = 0;
 				enm->active = 0;
 			}
