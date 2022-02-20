@@ -53,6 +53,9 @@ struct ply_ctl {
 
 struct boss {
 	char loaded;
+	int x, y;
+	int next_x, next_y;
+	char move_delay;
 } boss;
 
 struct enemy_spawner {
@@ -419,6 +422,7 @@ void init_boss() {
 	SMS_setBGScrollX(0);
 	SMS_setBGScrollY(0);
 
+	// Draws the boss.
 	unsigned int *t = dracolich_tilemap_bin;
 	for (char y = 0; y != 16; y++) {
 		SMS_setNextTileatXY(0, y);
@@ -427,8 +431,51 @@ void init_boss() {
 			t++;
 		}
 	}
-	
+
+	boss.x = 128 - 96 / 2;
+	boss.y = 0;
+	boss.next_x = boss.x;
+	boss.next_y = boss.y;
+	boss.move_delay = 0;
 	boss.loaded = 1;
+
+	SMS_setBGScrollX(boss.x);
+	SMS_setBGScrollY(boss.y);
+}
+
+void handle_boss() {
+	if (!boss.loaded) return;
+	
+	if (boss.move_delay) {
+		// Wait
+		boss.move_delay--;
+	} else if (boss.x != boss.next_x || boss.y != boss.next_y) {
+		// Move towards target
+		
+		if (boss.x < boss.next_x) {
+			boss.x++;
+		} else if (boss.x > boss.next_x) {
+			boss.x--;
+		}
+
+		if (boss.y < boss.next_y) {
+			boss.y++;
+		} else if (boss.y > boss.next_y) {
+			boss.y--;
+		}
+	} else {
+		// Select movement target
+		boss.next_x = rand() % (SCREEN_W - 96);
+		boss.next_y = rand() % (SCREEN_H - 128);
+		boss.move_delay = 30 + rand() % 20;
+	}
+		
+}
+void draw_boss() {
+	if (!boss.loaded) return;
+	
+	SMS_setBGScrollX(boss.x);
+	SMS_setBGScrollY(SCROLL_H - boss.y);
 }
 
 void interrupt_handler() {
@@ -476,15 +523,17 @@ void gameplay_loop() {
 	while (timer.value) {	
 		handle_player_input();
 		handle_enemies();
+		handle_boss();
 		handle_icons();
 		handle_powerups();
 		handle_player_shots();
 		handle_score();
-	
+		
 		SMS_initSprites();
 
 		draw_player();
 		draw_enemies();
+		draw_boss();
 		draw_powerups();
 		draw_player_shots();
 		draw_score();
@@ -499,7 +548,7 @@ void gameplay_loop() {
 			draw_map();		
 			draw_map();
 			
-			if (timer.value < 57)  init_boss();
+			if (timer.value < 59)  init_boss();
 		}
 	}
 }
