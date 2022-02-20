@@ -51,6 +51,10 @@ struct ply_ctl {
 	char death_delay;
 } ply_ctl;
 
+struct boss {
+	char loaded;
+} boss;
+
 struct enemy_spawner {
 	char type;
 	char x;
@@ -398,6 +402,35 @@ void draw_score() {
 	draw_score_display(&score);
 }
 
+void clear_tilemap() {
+	SMS_setNextTileatXY(0, 0);
+	for (int i = (SCREEN_CHAR_W * SCROLL_CHAR_H); i; i--) {
+		SMS_setTile(0);
+	}
+}
+
+void init_boss() {
+	SMS_loadPSGaidencompressedTiles(dracolich_tiles_psgcompr, 256);	
+	SMS_loadBGPalette(dracolich_palette_bin);
+	SMS_setSpritePaletteColor(0, 0);
+	SMS_setBGPaletteColor(0, 0);
+
+	clear_tilemap();
+	SMS_setBGScrollX(0);
+	SMS_setBGScrollY(0);
+
+	unsigned int *t = dracolich_tilemap_bin;
+	for (char y = 0; y != 16; y++) {
+		SMS_setNextTileatXY(0, y);
+		for (char x = 0; x != 12; x++) {
+			SMS_setTile(*t + 256);
+			t++;
+		}
+	}
+	
+	boss.loaded = 1;
+}
+
 void interrupt_handler() {
 	PSGFrame();
 	PSGSFXFrame();
@@ -432,6 +465,8 @@ void gameplay_loop() {
 	ply_ctl.powerup1_active = 1;
 	ply_ctl.powerup2_active = 0;
 	ply_ctl.death_delay = 0;
+	
+	boss.loaded = 0;
 
 	init_enemies();
 	init_player_shots();
@@ -458,9 +493,14 @@ void gameplay_loop() {
 		SMS_waitForVBlank();
 		SMS_copySpritestoSAT();
 		
-		// Scroll two lines per frame
-		draw_map();		
-		draw_map();		
+		if (boss.loaded) {
+		} else {
+			// Scroll two lines per frame
+			draw_map();		
+			draw_map();
+			
+			if (timer.value < 57)  init_boss();
+		}
 	}
 }
 
