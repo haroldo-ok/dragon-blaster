@@ -62,6 +62,7 @@ struct boss {
 	char move_delay;
 	char shot_delay;
 	char shot_type;
+	char shot_type_delay;
 } boss;
 
 struct enemy_spawner {
@@ -508,7 +509,8 @@ void init_boss() {
 	boss.move_delay = 0;
 	boss.loaded = 1;
 	boss.shot_delay = 0;
-	boss.shot_type = 0;
+	boss.shot_type = 1;
+	boss.shot_type_delay = 0;
 
 	SMS_setBGScrollX(boss.x);
 	SMS_setBGScrollY(boss.y);
@@ -539,6 +541,13 @@ void handle_boss() {
 		boss.next_x = rand() % (SCREEN_W - 96);
 		boss.next_y = rand() % (SCREEN_H - 128);
 		boss.move_delay = 30 + rand() % 20;
+	}
+
+	if (boss.shot_type_delay) {
+		boss.shot_type_delay--;
+	} else {
+		boss.shot_type = rand() % BOSS_SHOT_TYPE_COUNT;
+		boss.shot_type_delay = 128 + (rand() & 0x1F);
 	}
 		
 	if (boss.shot_delay) {

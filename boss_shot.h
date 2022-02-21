@@ -3,7 +3,7 @@
 
 #include "shot.h"
 
-#define BOSS_SHOT_TYPE_COUNT (1)
+#define BOSS_SHOT_TYPE_COUNT (2)
 
 extern const shot_info boss_shot_infos[];
 
