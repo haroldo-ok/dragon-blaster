@@ -5,6 +5,7 @@
 #include "lib/PSGlib.h"
 #include "actor.h"
 #include "shot.h"
+#include "boss_shot.h"
 #include "shots.h"
 #include "map.h"
 #include "score.h"
@@ -17,7 +18,9 @@
 #define PLAYER_SPEED (3)
 
 #define ENEMY_MAX (3)
+#define ENEMY_SHOT_MAX (16)
 #define FOR_EACH_ENEMY(enm) enm = enemies; for (int i = ENEMY_MAX; i; i--, enm++)
+#define FOR_EACH_ENEMY_SHOT(sht) sht = enemy_shots; for (int i = ENEMY_SHOT_MAX; i; i--, sht++)
 	
 #define POWERUP_BASE_TILE (100)
 #define POWERUP_LIGHTINING_TILE (POWERUP_BASE_TILE)
@@ -32,6 +35,7 @@
 
 actor player;
 actor enemies[ENEMY_MAX];
+actor enemy_shots[ENEMY_SHOT_MAX];
 actor icons[2];
 actor powerup;
 actor timer_label;
@@ -484,6 +488,69 @@ void interrupt_handler() {
 	frames_elapsed++;
 }
 
+void init_enemy_shots() {
+	static actor *sht;
+	
+	FOR_EACH_ENEMY_SHOT(sht) {
+		sht->active = 0;
+	}
+}
+
+void handle_enemy_shots() {
+	static actor *sht;
+	
+	FOR_EACH_ENEMY_SHOT(sht) {
+		if (sht->active) {
+			move_actor(sht);
+			if (sht->y < 0 || sht->y > (SCREEN_H - 16)) sht->active = 0;
+			if (sht->state == 1 && !sht->state_timer) sht->active = 0;
+		}
+	}
+}
+
+void draw_enemy_shots() {
+	static actor *sht;
+	
+	FOR_EACH_ENEMY_SHOT(sht) {
+		draw_actor(sht);
+	}
+}
+
+char fire_enemy_shot(int x, int y, char shot_type) {
+	static actor *sht;
+	static char shots_to_fire, fired;
+	static shot_info *info;
+	static path *path;
+	
+	info = boss_shot_infos + shot_type;
+	path = info->paths;
+	shots_to_fire = info->length;
+	fired = 0;
+	
+	FOR_EACH_ENEMY_SHOT(sht) {
+		if (!sht->active) {
+			init_actor(sht, 
+				x + path->x, y + path->y, 
+				1, 1, 
+				info->base_tile, info->frame_count);
+				
+			sht->path = path->steps;
+			sht->path_flags = path->flags;
+			sht->state = 1;
+			sht->state_timer = info->life_time;
+						
+			// Fired something
+			fired = 1;
+			path++;
+			shots_to_fire--;
+			if (!shots_to_fire)	return 1;
+		}
+	}
+
+	// Didn't fire anything
+	return fired;
+}
+
 void gameplay_loop() {	
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
@@ -517,6 +584,7 @@ void gameplay_loop() {
 
 	init_enemies();
 	init_player_shots();
+	init_enemy_shots();
 	init_powerups();
 	init_score();
 	
@@ -527,6 +595,7 @@ void gameplay_loop() {
 		handle_icons();
 		handle_powerups();
 		handle_player_shots();
+		handle_enemy_shots();
 		handle_score();
 		
 		SMS_initSprites();
@@ -536,6 +605,7 @@ void gameplay_loop() {
 		draw_boss();
 		draw_powerups();
 		draw_player_shots();
+		draw_enemy_shots();
 		draw_score();
 		
 		SMS_finalizeSprites();
