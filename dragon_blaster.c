@@ -32,6 +32,7 @@
 #define POWERUP_WIND (3)
 
 #define TIMER_MAX (60)
+#define BOSS_TIMER (30)
 
 actor player;
 actor enemies[ENEMY_MAX];
@@ -546,7 +547,7 @@ void handle_boss() {
 	if (boss.shot_type_delay) {
 		boss.shot_type_delay--;
 	} else {
-		boss.shot_type = rand() % BOSS_SHOT_TYPE_COUNT;
+		boss.shot_type = (boss.shot_type + 1) % BOSS_SHOT_TYPE_COUNT;
 		boss.shot_type_delay = 128 + (rand() & 0x1F);
 	}
 		
@@ -638,7 +639,7 @@ void gameplay_loop() {
 			draw_map();		
 			draw_map();
 			
-			if (timer.value < 59)  init_boss();
+			if (timer.value < BOSS_TIMER)  init_boss();
 		}
 	}
 }
@@ -683,7 +684,7 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,9, 2022,02,20, "Haroldo-OK\\2022", "Dragon Blaster",
+SMS_EMBED_SDSC_HEADER(0,9, 2022,02,21, "Haroldo-OK\\2022", "Dragon Blaster",
   "A dragon-themed shoot-em-up.\n"
   "Originally made for the SHMUP JAM 1 - Dragons - https://itch.io/jam/shmup-jam-1-dragons\n"
   "Enhanced for SMS Power! Competition 2022 - https://www.smspower.org/forums/18879-Competitions2022DeadlineIs27thMarch\n"
