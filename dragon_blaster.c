@@ -60,6 +60,8 @@ struct boss {
 	int x, y;
 	int next_x, next_y;
 	char move_delay;
+	char shot_delay;
+	char shot_type;
 } boss;
 
 struct enemy_spawner {
@@ -416,78 +418,6 @@ void clear_tilemap() {
 	}
 }
 
-void init_boss() {
-	SMS_loadPSGaidencompressedTiles(dracolich_tiles_psgcompr, 256);	
-	SMS_loadBGPalette(dracolich_palette_bin);
-	SMS_setSpritePaletteColor(0, 0);
-	SMS_setBGPaletteColor(0, 0);
-
-	clear_tilemap();
-	SMS_setBGScrollX(0);
-	SMS_setBGScrollY(0);
-
-	// Draws the boss.
-	unsigned int *t = dracolich_tilemap_bin;
-	for (char y = 0; y != 16; y++) {
-		SMS_setNextTileatXY(0, y);
-		for (char x = 0; x != 12; x++) {
-			SMS_setTile(*t + 256);
-			t++;
-		}
-	}
-
-	boss.x = 128 - 96 / 2;
-	boss.y = 0;
-	boss.next_x = boss.x;
-	boss.next_y = boss.y;
-	boss.move_delay = 0;
-	boss.loaded = 1;
-
-	SMS_setBGScrollX(boss.x);
-	SMS_setBGScrollY(boss.y);
-}
-
-void handle_boss() {
-	if (!boss.loaded) return;
-	
-	if (boss.move_delay) {
-		// Wait
-		boss.move_delay--;
-	} else if (boss.x != boss.next_x || boss.y != boss.next_y) {
-		// Move towards target
-		
-		if (boss.x < boss.next_x) {
-			boss.x++;
-		} else if (boss.x > boss.next_x) {
-			boss.x--;
-		}
-
-		if (boss.y < boss.next_y) {
-			boss.y++;
-		} else if (boss.y > boss.next_y) {
-			boss.y--;
-		}
-	} else {
-		// Select movement target
-		boss.next_x = rand() % (SCREEN_W - 96);
-		boss.next_y = rand() % (SCREEN_H - 128);
-		boss.move_delay = 30 + rand() % 20;
-	}
-		
-}
-void draw_boss() {
-	if (!boss.loaded) return;
-	
-	SMS_setBGScrollX(boss.x);
-	SMS_setBGScrollY(SCROLL_H - boss.y);
-}
-
-void interrupt_handler() {
-	PSGFrame();
-	PSGSFXFrame();
-	frames_elapsed++;
-}
-
 void init_enemy_shots() {
 	static actor *sht;
 	
@@ -549,6 +479,87 @@ char fire_enemy_shot(int x, int y, char shot_type) {
 
 	// Didn't fire anything
 	return fired;
+}
+
+void init_boss() {
+	SMS_loadPSGaidencompressedTiles(dracolich_tiles_psgcompr, 256);	
+	SMS_loadBGPalette(dracolich_palette_bin);
+	SMS_setSpritePaletteColor(0, 0);
+	SMS_setBGPaletteColor(0, 0);
+
+	clear_tilemap();
+	SMS_setBGScrollX(0);
+	SMS_setBGScrollY(0);
+
+	// Draws the boss.
+	unsigned int *t = dracolich_tilemap_bin;
+	for (char y = 0; y != 16; y++) {
+		SMS_setNextTileatXY(0, y);
+		for (char x = 0; x != 12; x++) {
+			SMS_setTile(*t + 256);
+			t++;
+		}
+	}
+
+	boss.x = 128 - 96 / 2;
+	boss.y = 0;
+	boss.next_x = boss.x;
+	boss.next_y = boss.y;
+	boss.move_delay = 0;
+	boss.loaded = 1;
+	boss.shot_delay = 0;
+	boss.shot_type = 0;
+
+	SMS_setBGScrollX(boss.x);
+	SMS_setBGScrollY(boss.y);
+}
+
+void handle_boss() {
+	if (!boss.loaded) return;
+	
+	if (boss.move_delay) {
+		// Wait
+		boss.move_delay--;
+	} else if (boss.x != boss.next_x || boss.y != boss.next_y) {
+		// Move towards target
+		
+		if (boss.x < boss.next_x) {
+			boss.x++;
+		} else if (boss.x > boss.next_x) {
+			boss.x--;
+		}
+
+		if (boss.y < boss.next_y) {
+			boss.y++;
+		} else if (boss.y > boss.next_y) {
+			boss.y--;
+		}
+	} else {
+		// Select movement target
+		boss.next_x = rand() % (SCREEN_W - 96);
+		boss.next_y = rand() % (SCREEN_H - 128);
+		boss.move_delay = 30 + rand() % 20;
+	}
+		
+	if (boss.shot_delay) {
+		boss.shot_delay--;
+	} else {
+		if (fire_enemy_shot(boss.x + 44, boss.y + 32, boss.shot_type)) {
+			boss.shot_delay = boss_shot_infos[boss.shot_type].firing_delay;
+		}
+	}
+}
+void draw_boss() {
+	if (!boss.loaded) return;
+	
+	SMS_setBGScrollX(boss.x);
+	SMS_setBGScrollY(SCROLL_H - boss.y);
+}
+
+void interrupt_handler() {
+	PSGFrame();
+	PSGSFXFrame();
+	frames_elapsed++;
 }
 
 void gameplay_loop() {	
