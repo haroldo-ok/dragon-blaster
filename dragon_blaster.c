@@ -5,6 +5,7 @@
 #include "lib/PSGlib.h"
 #include "actor.h"
 #include "shot.h"
+#include "boss_shot.h"
 #include "shots.h"
 #include "map.h"
 #include "score.h"
@@ -17,7 +18,9 @@
 #define PLAYER_SPEED (3)
 
 #define ENEMY_MAX (3)
+#define ENEMY_SHOT_MAX (16)
 #define FOR_EACH_ENEMY(enm) enm = enemies; for (int i = ENEMY_MAX; i; i--, enm++)
+#define FOR_EACH_ENEMY_SHOT(sht) sht = enemy_shots; for (int i = ENEMY_SHOT_MAX; i; i--, sht++)
 	
 #define POWERUP_BASE_TILE (100)
 #define POWERUP_LIGHTINING_TILE (POWERUP_BASE_TILE)
@@ -29,9 +32,11 @@
 #define POWERUP_WIND (3)
 
 #define TIMER_MAX (60)
+#define BOSS_TIMER (30)
 
 actor player;
 actor enemies[ENEMY_MAX];
+actor enemy_shots[ENEMY_SHOT_MAX];
 actor icons[2];
 actor powerup;
 actor timer_label;
@@ -50,6 +55,16 @@ struct ply_ctl {
 
 	char death_delay;
 } ply_ctl;
+
+struct boss {
+	char loaded;
+	int x, y;
+	int next_x, next_y;
+	char move_delay;
+	char shot_delay;
+	char shot_type;
+	char shot_type_delay;
+} boss;
 
 struct enemy_spawner {
 	char type;
@@ -398,6 +413,159 @@ void draw_score() {
 	draw_score_display(&score);
 }
 
+void clear_tilemap() {
+	SMS_setNextTileatXY(0, 0);
+	for (int i = (SCREEN_CHAR_W * SCROLL_CHAR_H); i; i--) {
+		SMS_setTile(0);
+	}
+}
+
+void init_enemy_shots() {
+	static actor *sht;
+	
+	FOR_EACH_ENEMY_SHOT(sht) {
+		sht->active = 0;
+	}
+}
+
+void handle_enemy_shots() {
+	static actor *sht;
+	
+	FOR_EACH_ENEMY_SHOT(sht) {
+		if (sht->active) {
+			move_actor(sht);
+			if (sht->y < 0 || sht->y > (SCREEN_H - 16)) sht->active = 0;
+			if (sht->state == 1 && !sht->state_timer) sht->active = 0;
+		}
+	}
+}
+
+void draw_enemy_shots() {
+	static actor *sht;
+	
+	FOR_EACH_ENEMY_SHOT(sht) {
+		draw_actor(sht);
+	}
+}
+
+char fire_enemy_shot(int x, int y, char shot_type) {
+	static actor *sht;
+	static char shots_to_fire, fired;
+	static shot_info *info;
+	static path *path;
+	
+	info = boss_shot_infos + shot_type;
+	path = info->paths;
+	shots_to_fire = info->length;
+	fired = 0;
+	
+	FOR_EACH_ENEMY_SHOT(sht) {
+		if (!sht->active) {
+			init_actor(sht, 
+				x + path->x, y + path->y, 
+				1, 1, 
+				info->base_tile, info->frame_count);
+				
+			sht->path = path->steps;
+			sht->path_flags = path->flags;
+			sht->state = 1;
+			sht->state_timer = info->life_time;
+						
+			// Fired something
+			fired = 1;
+			path++;
+			shots_to_fire--;
+			if (!shots_to_fire)	return 1;
+		}
+	}
+
+	// Didn't fire anything
+	return fired;
+}
+
+void init_boss() {
+	SMS_loadPSGaidencompressedTiles(dracolich_tiles_psgcompr, 256);	
+	SMS_loadBGPalette(dracolich_palette_bin);
+	SMS_setSpritePaletteColor(0, 0);
+	SMS_setBGPaletteColor(0, 0);
+
+	clear_tilemap();
+	SMS_setBGScrollX(0);
+	SMS_setBGScrollY(0);
+
+	// Draws the boss.
+	unsigned int *t = dracolich_tilemap_bin;
+	for (char y = 0; y != 16; y++) {
+		SMS_setNextTileatXY(0, y);
+		for (char x = 0; x != 12; x++) {
+			SMS_setTile(*t + 256);
+			t++;
+		}
+	}
+
+	boss.x = 128 - 96 / 2;
+	boss.y = 0;
+	boss.next_x = boss.x;
+	boss.next_y = boss.y;
+	boss.move_delay = 0;
+	boss.loaded = 1;
+	boss.shot_delay = 0;
+	boss.shot_type = 1;
+	boss.shot_type_delay = 0;
+
+	SMS_setBGScrollX(boss.x);
+	SMS_setBGScrollY(boss.y);
+}
+
+void handle_boss() {
+	if (!boss.loaded) return;
+	
+	if (boss.move_delay) {
+		// Wait
+		boss.move_delay--;
+	} else if (boss.x != boss.next_x || boss.y != boss.next_y) {
+		// Move towards target
+		
+		if (boss.x < boss.next_x) {
+			boss.x++;
+		} else if (boss.x > boss.next_x) {
+			boss.x--;
+		}
+
+		if (boss.y < boss.next_y) {
+			boss.y++;
+		} else if (boss.y > boss.next_y) {
+			boss.y--;
+		}
+	} else {
+		// Select movement target
+		boss.next_x = rand() % (SCREEN_W - 96);
+		boss.next_y = rand() % (SCREEN_H - 128);
+		boss.move_delay = 30 + rand() % 20;
+	}
+
+	if (boss.shot_type_delay) {
+		boss.shot_type_delay--;
+	} else {
+		boss.shot_type = (boss.shot_type + 1) % BOSS_SHOT_TYPE_COUNT;
+		boss.shot_type_delay = 128 + (rand() & 0x1F);
+	}
+		
+	if (boss.shot_delay) {
+		boss.shot_delay--;
+	} else {
+		if (fire_enemy_shot(boss.x + 44, boss.y + 32, boss.shot_type)) {
+			boss.shot_delay = boss_shot_infos[boss.shot_type].firing_delay;
+		}
+	}
+}
+void draw_boss() {
+	if (!boss.loaded) return;
+	
+	SMS_setBGScrollX(boss.x);
+	SMS_setBGScrollY(SCROLL_H - boss.y);
+}
+
 void interrupt_handler() {
 	PSGFrame();
 	PSGSFXFrame();
@@ -432,35 +600,47 @@ void gameplay_loop() {
 	ply_ctl.powerup1_active = 1;
 	ply_ctl.powerup2_active = 0;
 	ply_ctl.death_delay = 0;
+	
+	boss.loaded = 0;
 
 	init_enemies();
 	init_player_shots();
+	init_enemy_shots();
 	init_powerups();
 	init_score();
 	
 	while (timer.value) {	
 		handle_player_input();
 		handle_enemies();
+		handle_boss();
 		handle_icons();
 		handle_powerups();
 		handle_player_shots();
+		handle_enemy_shots();
 		handle_score();
-	
+		
 		SMS_initSprites();
 
 		draw_player();
 		draw_enemies();
+		draw_boss();
 		draw_powerups();
 		draw_player_shots();
+		draw_enemy_shots();
 		draw_score();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
 		SMS_copySpritestoSAT();
 		
-		// Scroll two lines per frame
-		draw_map();		
-		draw_map();		
+		if (boss.loaded) {
+		} else {
+			// Scroll two lines per frame
+			draw_map();		
+			draw_map();
+			
+			if (timer.value < BOSS_TIMER)  init_boss();
+		}
 	}
 }
 
@@ -504,7 +684,8 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,8, 2022,01,16, "Haroldo-OK\\2022", "Dragon Blaster",
+SMS_EMBED_SDSC_HEADER(0,9, 2022,02,21, "Haroldo-OK\\2022", "Dragon Blaster",
   "A dragon-themed shoot-em-up.\n"
-  "Made for the SHMUP JAM 1 - Dragons - https://itch.io/jam/shmup-jam-1-dragons\n"
+  "Originally made for the SHMUP JAM 1 - Dragons - https://itch.io/jam/shmup-jam-1-dragons\n"
+  "Enhanced for SMS Power! Competition 2022 - https://www.smspower.org/forums/18879-Competitions2022DeadlineIs27thMarch\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");

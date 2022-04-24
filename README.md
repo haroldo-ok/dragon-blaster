@@ -6,6 +6,7 @@ A dragon themed shoot-em-up for the Sega Master System. Originally made for the 
 * Main character, enemy: https://opengameart.org/content/dragon-icon-pack
 * Lightning: https://opengameart.org/content/space-war-man-platform-shmup-set
 * Fire, wind, background: https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181
+* Dracolich: https://opengameart.org/content/stendhal-dragons
 
 ## Tools used
 
