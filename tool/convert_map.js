@@ -17,12 +17,10 @@ const validateMap = map => {
   mustBeTrue(map.layers.length > 0, 'There must be at least one layer.');
 }
 
-tmx.parseFile(sourcePath, function(err, map) {
-	if (err) throw err;
+const firstLayerOfType = (map, layerType) => map.layers.filter(({type}) => type == layerType)[0];
 
-	validateMap(map);
-
-	const layer = map.layers[0];
+const processBackground = map => {
+	const layer = firstLayerOfType(map, 'tile');
 	const rows = [];
 	for (let y = 0; y < map.height; y++) {
 		const row = [];				
@@ -49,7 +47,17 @@ tmx.parseFile(sourcePath, function(err, map) {
 			.flat();
 	});
 	
-	const outputArray = Int8Array.from([...compressed.flat(), 255]);
+	return compressed;
+}
+
+tmx.parseFile(sourcePath, function(err, map) {
+	if (err) throw err;
+
+	validateMap(map);
+
+	const compressedLines = processBackground(map);
+	
+	const outputArray = Int8Array.from([...compressedLines.flat(), 255]);
 	fs.writeFile(destPath, Buffer.from(outputArray), (err) => {
 		if (err) throw err;
 	});	
