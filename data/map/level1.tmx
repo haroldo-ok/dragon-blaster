@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="2021.03.23" orientation="orthogonal" renderorder="right-down" width="16" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="2" nextobjectid="1">
+<map version="1.5" tiledversion="2021.03.23" orientation="orthogonal" renderorder="right-down" width="16" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="4">
  <tileset firstgid="1" source="tileset.tsx"/>
- <layer id="1" name="Camada de Tiles 1" width="16" height="100">
+ <tileset firstgid="49" source="sprites.tsx"/>
+ <layer id="1" name="Map" width="16" height="100">
   <data encoding="csv">
 5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
 5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
@@ -105,4 +106,7 @@
 5,5,5,5,5,5,33,34,34,34,34,35,5,5,5,5
 </data>
  </layer>
+ <objectgroup id="2" name="Objects">
+  <object id="3" gid="65" x="17.5" y="1376" width="16" height="16"/>
+ </objectgroup>
 </map>
