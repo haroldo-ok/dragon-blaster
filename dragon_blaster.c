@@ -205,6 +205,16 @@ char is_colliding_against_player(actor *_act) {
 	return 0;
 }
 
+void create_enemy_spawner(char x) {
+	enemy_spawner.type = rand() & 1;
+	enemy_spawner.x = x;
+	enemy_spawner.flags = 0;
+	enemy_spawner.path = (path_step *) path1_path;
+	if (enemy_spawner.x > 124) {
+		enemy_spawner.flags |= PATH_FLIP_X;
+	}
+}
+
 void init_enemies() {
 	static actor *enm;
 
@@ -220,20 +230,11 @@ void init_enemies() {
 void handle_enemies() {
 	static actor *enm, *sht;	
 	
+	if (!enemy_spawner.x) return;
+	
 	if (enemy_spawner.delay) {
 		enemy_spawner.delay--;
-	} else if (enemy_spawner.next != ENEMY_MAX) {
-		if (!enemy_spawner.x) {
-			enemy_spawner.type = rand() & 1;
-			enemy_spawner.x = 8 + rand() % 124;
-			enemy_spawner.flags = 0;
-			enemy_spawner.path = (path_step *) path1_path;
-			if (rand() & 1) {
-				enemy_spawner.x += 124;
-				enemy_spawner.flags |= PATH_FLIP_X;
-			}
-		}
-		
+	} else if (enemy_spawner.next != ENEMY_MAX) {		
 		enm = enemies + enemy_spawner.next;
 		
 		init_actor(enm, enemy_spawner.x, 0, 2, 1, 66, 1);
