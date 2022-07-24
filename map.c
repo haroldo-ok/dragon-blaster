@@ -42,6 +42,9 @@ void decompress_map_row(char *buffer) {
 				*d = ch;
 				d++;
 			}
+		} else if (ch & 0x40) {
+			// Is a sprite declaration
+			// TODO: Spawn enemies
 		} else {
 			// Just use the char
 			*d = ch;
