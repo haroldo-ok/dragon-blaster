@@ -333,6 +333,14 @@ void handle_icons() {
 	icons[1].base_tile = tile;
 }
 
+void spawn_powerup(char x, char type) {
+	powerup.x = x;
+	powerup.y = -16;
+	powerup.active = 1;
+	powerup.state = type;
+	powerup.base_tile = powerup_base_tile(powerup.state);
+}
+
 void handle_powerups() {
 	powerup.y++;
 	if (powerup.y > SCREEN_H) powerup.active = 0;
@@ -364,12 +372,6 @@ void handle_powerups() {
 			
 			powerup.active = 0;			
 		}
-	} else {
-		powerup.x = 8 + rand() % (256 - 24);
-		powerup.y = -16;
-		powerup.active = 1;
-		powerup.state = 1 + rand() % 3;
-		powerup.base_tile = powerup_base_tile(powerup.state);
 	}	
 }
 

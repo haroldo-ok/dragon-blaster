@@ -9,6 +9,9 @@
 // TODO: Refactor enemy logic, move to its own source file
 extern void create_enemy_spawner(char x);
 
+// TODO: Refactor powerup logic, move to its own source file
+extern void spawn_powerup(char x, char type);
+
 struct map_data {
 	char *level_data;
 	char *next_row;
@@ -48,8 +51,14 @@ void decompress_map_row(char *buffer) {
 		} else if (ch & 0x40) {
 			// Is a sprite declaration
 			pos = (ch & 0x1F) << 4;
+			ch = *o;
 			o++;
-			create_enemy_spawner(pos);
+			
+			if (ch < 25) {
+				create_enemy_spawner(pos);
+			} else {
+				spawn_powerup(pos, 1 + ((ch - 25) >> 1));
+			}
 		} else {
 			// Just use the char
 			*d = ch;
