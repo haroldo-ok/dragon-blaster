@@ -20,6 +20,11 @@ const validateMap = map => {
 
 const firstLayerOfType = (map, layerType) => map.layers.filter(({type}) => type == layerType)[0];
 
+const getFirstGid = (map, gid) => gid && Math.max.apply(Math, 
+	map.tileSets
+		.map(({ firstGid }) => firstGid)
+		.filter(firstGid => gid >= firstGid));
+
 const processBackground = map => {
 	const layer = firstLayerOfType(map, 'tile');
 	const rows = [];
@@ -61,10 +66,11 @@ const processSprites = map => {
 	const grouped = groupBy(layer.objects.map(object => {
 		const rowNumber = Math.floor(object.y / 16);
 		const colNumber = Math.floor(object.x / 16);
-		return {rowNumber, colNumber};
+		const tileId = object.gid && object.gid - getFirstGid(map, object.gid);
+		return {rowNumber, colNumber, tileId};
 	}), 'rowNumber');
 	
-	const encoded = mapValues(grouped, lineObjs => lineObjs.map(({colNumber}) => colNumber & 0x3F | 0x40));
+	const encoded = mapValues(grouped, lineObjs => lineObjs.map(({colNumber, tileId}) => [colNumber & 0x3F | 0x40, tileId]).flat());
 	
 	return encoded;
 }
