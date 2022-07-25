@@ -205,6 +205,16 @@ char is_colliding_against_player(actor *_act) {
 	return 0;
 }
 
+void create_enemy_spawner(char x) {
+	enemy_spawner.type = rand() & 1;
+	enemy_spawner.x = x;
+	enemy_spawner.flags = 0;
+	enemy_spawner.path = (path_step *) path1_path;
+	if (enemy_spawner.x > 124) {
+		enemy_spawner.flags |= PATH_FLIP_X;
+	}
+}
+
 void init_enemies() {
 	static actor *enm;
 
@@ -220,20 +230,11 @@ void init_enemies() {
 void handle_enemies() {
 	static actor *enm, *sht;	
 	
+	if (!enemy_spawner.x) return;
+	
 	if (enemy_spawner.delay) {
 		enemy_spawner.delay--;
-	} else if (enemy_spawner.next != ENEMY_MAX) {
-		if (!enemy_spawner.x) {
-			enemy_spawner.type = rand() & 1;
-			enemy_spawner.x = 8 + rand() % 124;
-			enemy_spawner.flags = 0;
-			enemy_spawner.path = (path_step *) path1_path;
-			if (rand() & 1) {
-				enemy_spawner.x += 124;
-				enemy_spawner.flags |= PATH_FLIP_X;
-			}
-		}
-		
+	} else if (enemy_spawner.next != ENEMY_MAX) {		
 		enm = enemies + enemy_spawner.next;
 		
 		init_actor(enm, enemy_spawner.x, 0, 2, 1, 66, 1);
@@ -332,6 +333,14 @@ void handle_icons() {
 	icons[1].base_tile = tile;
 }
 
+void spawn_powerup(char x, char type) {
+	powerup.x = x;
+	powerup.y = -16;
+	powerup.active = 1;
+	powerup.state = type;
+	powerup.base_tile = powerup_base_tile(powerup.state);
+}
+
 void handle_powerups() {
 	powerup.y++;
 	if (powerup.y > SCREEN_H) powerup.active = 0;
@@ -363,12 +372,6 @@ void handle_powerups() {
 			
 			powerup.active = 0;			
 		}
-	} else {
-		powerup.x = 8 + rand() % (256 - 24);
-		powerup.y = -16;
-		powerup.active = 1;
-		powerup.state = 1 + rand() % 3;
-		powerup.base_tile = powerup_base_tile(powerup.state);
 	}	
 }
 
@@ -684,8 +687,9 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,9, 2022,02,21, "Haroldo-OK\\2022", "Dragon Blaster",
+SMS_EMBED_SDSC_HEADER(0,10, 2022,07,24, "Haroldo-OK\\2022", "Dragon Blaster",
   "A dragon-themed shoot-em-up.\n"
   "Originally made for the SHMUP JAM 1 - Dragons - https://itch.io/jam/shmup-jam-1-dragons\n"
   "Enhanced for SMS Power! Competition 2022 - https://www.smspower.org/forums/18879-Competitions2022DeadlineIs27thMarch\n"
+  "Further Enhanced for Improve My Game Jam 22 - https://itch.io/jam/improve-my-game-jam-22\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");
