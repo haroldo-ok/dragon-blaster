@@ -341,12 +341,20 @@ void handle_icons() {
 }
 
 void spawn_powerup(char x, char type) {
-	// TODO: Handle more than one powerup
-	powerups->x = x;
-	powerups->y = -16;
-	powerups->active = 1;
-	powerups->state = type;
-	powerups->base_tile = powerup_base_tile(powerups->state);
+	static actor *pwr, *selected;
+
+	selected = 0;
+	FOR_EACH_POWERUP(pwr) {
+		if (!pwr->active) selected = pwr;
+	}
+
+	if (selected) {
+		selected->x = x;
+		selected->y = -16;
+		selected->active = 1;
+		selected->state = type;
+		selected->base_tile = powerup_base_tile(selected->state);
+	}
 }
 
 void handle_powerups() {
