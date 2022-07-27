@@ -1,5 +1,9 @@
 Devlog for https://itch.io/jam/improve-my-game-jam-22
 
+## 2022-07-27
+
+* Allow multiple powerups on screen.
+
 ## 2022-07-25
 
 * Updated the map conversion tool to support tile numbers for objects;
