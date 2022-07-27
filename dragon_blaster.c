@@ -31,6 +31,9 @@
 #define POWERUP_FIRE (2)
 #define POWERUP_WIND (3)
 
+#define POWERUP_MAX (3)
+#define FOR_EACH_POWERUP(pwr) pwr = powerups; for (int i = POWERUP_MAX; i; i--, pwr++)
+
 #define TIMER_MAX (60)
 #define BOSS_TIMER (30)
 
@@ -38,7 +41,7 @@ actor player;
 actor enemies[ENEMY_MAX];
 actor enemy_shots[ENEMY_SHOT_MAX];
 actor icons[2];
-actor powerup;
+actor powerups[POWERUP_MAX];
 actor timer_label;
 actor time_over;
 
@@ -304,11 +307,15 @@ void draw_background() {
 }
 
 void init_powerups() {
+	static actor *pwr;
+
 	init_actor(icons, 256 - 32 - 8, 8, 2, 1, POWERUP_LIGHTINING_TILE, 1);	
 	init_actor(icons + 1, 256 - 16 - 8, 8, 2, 1, POWERUP_FIRE_TILE, 1);	
 
-	init_actor(&powerup, 0, 0, 2, 1, POWERUP_LIGHTINING_TILE, 2);
-	powerup.active = 0;
+	FOR_EACH_POWERUP(pwr) {
+		init_actor(pwr, 0, 0, 2, 1, POWERUP_LIGHTINING_TILE, 2);
+		pwr->active = 0;
+	}
 }
 
 char powerup_base_tile(char type) {
@@ -334,55 +341,65 @@ void handle_icons() {
 }
 
 void spawn_powerup(char x, char type) {
-	powerup.x = x;
-	powerup.y = -16;
-	powerup.active = 1;
-	powerup.state = type;
-	powerup.base_tile = powerup_base_tile(powerup.state);
+	// TODO: Handle more than one powerup
+	powerups->x = x;
+	powerups->y = -16;
+	powerups->active = 1;
+	powerups->state = type;
+	powerups->base_tile = powerup_base_tile(powerups->state);
 }
 
 void handle_powerups() {
-	powerup.y++;
-	if (powerup.y > SCREEN_H) powerup.active = 0;
+	static actor *pwr;
 
-	if (powerup.active) {
-		// Check collision with player
-		if (powerup.x > player.x - 16 && powerup.x < player.x + 24 &&
-			powerup.y > player.y - 16 && powerup.y < player.y + 16) {
-			update_score(&powerup, 0);
+	FOR_EACH_POWERUP(pwr) {	
+		pwr->y++;
+		if (pwr->y > SCREEN_H) pwr->active = 0;
 
-			if (!ply_ctl.powerup2) {
-				// Second is absent
-				ply_ctl.powerup2 = powerup.state;
-			} else  if (!ply_ctl.powerup1_active) {
-				// First is inactive
-				ply_ctl.powerup1 = powerup.state;
-			} else if (!ply_ctl.powerup2_active) {
-				// Second is inactive
-				ply_ctl.powerup2 = powerup.state;
-			} else {
-				// Both are active
-				ply_ctl.powerup1 = ply_ctl.powerup2;
-				ply_ctl.powerup2 = powerup.state;				
+		if (pwr->active) {
+			// Check collision with player
+			if (pwr->x > player.x - 16 && pwr->x < player.x + 24 &&
+				pwr->y > player.y - 16 && pwr->y < player.y + 16) {
+				update_score(pwr, 0);
+
+				if (!ply_ctl.powerup2) {
+					// Second is absent
+					ply_ctl.powerup2 = pwr->state;
+				} else  if (!ply_ctl.powerup1_active) {
+					// First is inactive
+					ply_ctl.powerup1 = pwr->state;
+				} else if (!ply_ctl.powerup2_active) {
+					// Second is inactive
+					ply_ctl.powerup2 = pwr->state;
+				} else {
+					// Both are active
+					ply_ctl.powerup1 = ply_ctl.powerup2;
+					ply_ctl.powerup2 = pwr->state;				
+				}
+				
+				ply_ctl.powerup1_active = 1;
+				ply_ctl.powerup2_active = 1;
+				select_combined_powerup();
+				
+				pwr->active = 0;			
 			}
-			
-			ply_ctl.powerup1_active = 1;
-			ply_ctl.powerup2_active = 1;
-			select_combined_powerup();
-			
-			powerup.active = 0;			
-		}
-	}	
+		}	
+	}
 }
 
 void draw_powerups() {
+	static actor *pwr;
+
 	draw_actor(icons);
 	draw_actor(icons + 1);		
-	draw_actor(&powerup);
+
+	FOR_EACH_POWERUP(pwr) {	
+		draw_actor(pwr);
+	}
 }
 
 void update_score(actor *enm, actor *sht) {
-	increment_score_display(&score, enm == &powerup ? 5 : 1);
+	increment_score_display(&score, 5);
 }
 
 void init_score() {
