@@ -1,0 +1,4 @@
+# Moves exactly as fast as the scenery: used by the towers.
+speed 1
+0 0
+0 220

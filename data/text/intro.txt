@@ -1,0 +1,37 @@
+# Story shown before the game starts.
+#   ----                starts a new page
+#   @picture <name>     shows a picture from game.ini above the text
+# Lines can be up to 30 characters long.
+Long ago, the dragons of the
+Emerald Plains lived in
+peace, guarding the three
+sacred breaths:
+
+  LIGHTNING, FIRE and WIND.
+----
+@picture dracolich
+But the DRACOLICH, undead
+lord of all wyrms, rose from
+his tomb to steal their
+power for himself.
+----
+@picture boss_gazer
+His armies darken the skies.
+The elder dragons have
+fallen, one by one.
+
+Only you, the last
+hatchling, remain.
+----
+Fly, young dragon!
+
+  D-PAD     fly
+  BUTTON 2  breathe (hold)
+  BUTTON 1  switch breath
+
+Catch the elemental orbs.
+Two of them combine into a
+far stronger breath weapon.
+
+Shoot down a whole wave of
+enemies for a reward!

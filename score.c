@@ -1,11 +1,9 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "lib/SMSlib.h"
-#include "lib/PSGlib.h"
 #include "score.h"
 
-void init_score_display(score_display *score, char x, char y, char base_tile) {
+void init_score_display(score_display *score, char x, char y, unsigned char base_tile) {
 	score->x = x;
 	score->y = y;
 	score->base_tile = base_tile;
@@ -23,64 +21,58 @@ void increment_score_display(score_display *score, int delta) {
 	update_score_display(score, score->value + delta);
 }
 
-// Adapted from https://stackoverflow.com/a/784455/679240
-void reverse_string(char *str) {
-    static char *start, *end, temp;
-	
-    /* get range */
-    start = str;
-    end = start + strlen(str) - 1; /* -1 for \0 */
+char number_to_digits(unsigned int value, char *buffer) {
+	static const unsigned int powers[] = {10000, 1000, 100, 10};
+	static unsigned char i, digit, count;
+	static unsigned int remaining, power;
+	static char *ch;
 
-    /* reverse */
-    while (end > start) {
-        /* swap */
-        temp = *start;
-        *start = *end;
-        *end = temp;
-
-        /* move */
-        start++;
-        end--;
-    }
+	remaining = value;
+	ch = buffer;
+	count = 0;
+	// Repeated subtraction is much faster than dividing on a Z80.
+	for (i = 0; i != 4; i++) {
+		power = powers[i];
+		for (digit = 0; remaining >= power; digit++) remaining -= power;
+		if (digit || count) {
+			*ch++ = digit;
+			count++;
+		}
+	}
+	*ch++ = remaining;
+	*ch = 0x7F;
+	return count + 1;
 }
 
 void update_score_display_characters(score_display *_score) {
 	static score_display *score;
-	static unsigned int remaining;
-	static char digit, base_tile;
+	static unsigned char base_tile, n;
 	static char *ch;
 
 	score = _score;
 	base_tile = score->base_tile;
-	ch = score->characters;
-	
-	remaining = score->value;
-	
-	do {
-		digit = remaining % 10;
-		remaining /= 10;
-		
-		*ch = base_tile + (digit << 1);
-		ch++;
-	} while (remaining);
+
+	n = number_to_digits(score->value, score->characters);
+	for (ch = score->characters; n; n--, ch++) {
+		*ch = base_tile + (*ch << 1);
+	}
 	*ch = 0;
-	
-	reverse_string(score->characters);
-	
+
 	score->dirty = 0;
 }
 
 void draw_score_display(score_display *_score) {
 	static score_display *score;
-	static char x, y, *ch;
+	static unsigned char x, y;
+	static char *ch;
 
 	score = _score;
 	if (score->dirty) update_score_display_characters(score);
-	
+
 	x = score->x;
 	y = score->y;
-	
+
 	for (ch = score->characters; *ch; ch++, x += 8) {
-		SMS_addSprite(x, y, *ch);		
+		SMS_addSprite(x, y, *ch);
 	}
 }

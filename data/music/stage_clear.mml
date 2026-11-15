@@ -1,0 +1,13 @@
+# Fanfare played when a boss goes down
+@tempo 150
+@loop off
+@e1 = 15 14 13 12 11 10 9 9 8 8 7
+@e2 = 15 12 9 7 5 4 3 2 1 0
+@e3 = 11 13 15 14 13 12 12 11
+@e4 = 15 9 5 2 0
+@e5 = 15 13 11 9 7 5 3 2 1 0
+
+A o4 l8 v14 @e1  c e g >c4. <g >e | d e f4 g2 | >c1
+B o4 l8 v11 @e1  e g >c e4. c g | f g a4 b2 | >e1
+C o3 l4 v12 @e1  c c e g | g g g g | c1
+D l8 v11 @e5     c g g e4 g g e | c e c e e e e e | c1

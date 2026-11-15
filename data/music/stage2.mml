@@ -1,0 +1,15 @@
+# Stage 2 - Scorched Dunes
+@tempo 144
+@e1 = 15 14 13 12 11 10 9 9 8 8 7
+@e2 = 15 12 9 7 5 4 3 2 1 0
+@e3 = 11 13 15 14 13 12 12 11
+@e4 = 15 9 5 2 0
+@e5 = 15 13 11 9 7 5 3 2 1 0
+
+A o4 l8 v13 @e1  e4 f g+4 a b4 | >c4 <b a g+4 f4 | e4 g+ b >d4 c <b | a g+ f e e2
+A                e4 f g+4 a b4 | >c4 d e d4 c4 | <b4 a g+ f4 e d | e2. r4
+B o3 l8 v9 @e2   <b >e g+ e <b >e g+ e | <a >c f c <a >c f c | <b >e g+ e <b >e g+ e | <a >c e c <a >c e c
+B                <b >e g+ e <b >e g+ e | <a >c e c <a >c e c | <a >c f c <a >c f c | <b >e g+ e <b >e g+ e
+C o3 l4 v11 @e1  e e8 e8 <b >e | f f8 f8 c f | e e8 e8 <b >e | <a a8 a8 >e <a>
+C                e e8 e8 <b >e | <a a8 a8 >e <a> | f f8 f8 c f | e e8 e8 <b >e
+D l8 v10 @e4     [c g16 g16 e g c c e g]8

@@ -1,7 +1,7 @@
 #include "shot.h"
 
 const path_step lightining_path[] = {
-	{0, -4},
+	{0, -8},
 	{-128, -128}
 };
 
@@ -183,14 +183,18 @@ const path ball_lightining_paths[] = {
 };
 
 
+/*
+ * The nine breath weapons: three elements, and every combination of two.
+ * base tile, animation frames, life time, firing delay, projectiles, paths, damage
+ */
 const shot_info player_shot_infos[PLAYER_SHOT_TYPE_COUNT] = {
-	{26, 3, 45, 4, 1, lightining_paths}, // 0
-	{32, 4, 40, 8, 1, fire_paths}, // 1
-	{40, 2, 45, 12, 3, wind_paths}, // 2
-	{44, 3, 45, 4, 1, lightining_paths}, // 3
-	{32, 4, 55, 8, 1, hellfire_paths}, // 4
-	{40, 2, 45, 12, 4, tempest_paths}, // 5
-	{50, 2, 45, 4, 1, firebolt_paths}, // 6
-	{54, 2, 45, 9, 3, thunderstorm_paths}, // 7
-	{32, 2, 35, 9, 1, ball_lightining_paths}, // 8
+	{26, 3, 26, 5, 1, lightining_paths, 1}, // 0: Lightning
+	{32, 4, 44, 8, 1, fire_paths, 3}, // 1: Fire
+	{40, 2, 45, 12, 3, wind_paths, 1}, // 2: Wind
+	{44, 3, 26, 5, 1, lightining_paths, 2}, // 3: Thunderstrike (lightning + lightning)
+	{32, 4, 55, 8, 1, hellfire_paths, 5}, // 4: Hellfire (fire + fire)
+	{40, 2, 45, 12, 4, tempest_paths, 2}, // 5: Tempest (wind + wind)
+	{50, 2, 45, 5, 1, firebolt_paths, 2}, // 6: Firebolt (lightning + fire)
+	{54, 2, 45, 10, 3, thunderstorm_paths, 2}, // 7: Thunderstorm (lightning + wind)
+	{32, 2, 35, 9, 1, ball_lightining_paths, 4}, // 8: Firestorm (fire + wind)
 };

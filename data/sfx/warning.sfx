@@ -1,0 +1,8 @@
+channels 2
+priority 9
+sweep 400 800 14 14 14
+sweep 800 400 14 14 14
+sweep 400 800 14 14 14
+sweep 800 400 14 14 14
+sweep 400 800 14 14 14
+sweep 800 400 14 0 14

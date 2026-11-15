@@ -1,0 +1,15 @@
+# Stage 3 - Frozen Peaks
+@tempo 150
+@e1 = 15 14 13 12 11 10 9 9 8 8 7
+@e2 = 15 12 9 7 5 4 3 2 1 0
+@e3 = 11 13 15 14 13 12 12 11
+@e4 = 15 9 5 2 0
+@e5 = 15 13 11 9 7 5 3 2 1 0
+
+A o4 l8 v13 @e1  b4 >d4 g4 f+ e | d2 <b4 g4 | a4 >c4 e4 d c | <b2. r4
+A                >g4 f+ e d4 <b4 | >c4 <b a g4 e4 | f+4 a4 >d4 c <b | g2. r4
+B o3 l8 v9 @e2   <b >d g d <b >d g d | <b >d g d <b >d g d | <a >c e c <a >c e c | <b >e g e <b >e g e
+B                <b >d g d <b >d g d | c e g e c e g e | d f+ a f+ d f+ a f+ | <b >d g d <b >d g d
+C o3 l4 v11 @e1  g g d g | g g d g | <a a >e <a> | e e <b >e
+C                g g d g | c c g c | d d a d | g g d g
+D l8 v10 @e4     [c g e g c g e g16 g16]8

@@ -1,39 +1,55 @@
+# ---------------------------------------------------------------------------
+# Dragon Blaster - Sega Master System
+#
+# Needs: SDCC 4.2 or newer, GNU make, Python 3 with Pillow, and the devkitSMS
+# tool "ihx2sms" on the PATH. SMSlib and PSGlib are bundled in lib/.
+#
+#   make          builds dragon_blaster.sms
+#   make test     runs the automated playtest (needs smstest)
+#   make clean
+# ---------------------------------------------------------------------------
 PRJNAME := dragon_blaster
-OBJS := data.rel actor.rel shot.rel boss_shot.rel shots.rel map.rel score.rel dragon_blaster.rel
+PYTHON  ?= python3
+
+SRCS := actor.c shot.c shots.c bullet.c enemy.c boss.c map.c score.c sound.c screens.c dragon_blaster.c
+OBJS := $(SRCS:.c=.rel) gen/tables.rel
+
+CFLAGS  := -mz80 --opt-code-size --peep-file lib/peep-rules.txt
+LDFLAGS := -mz80 --no-std-crt0 --data-loc 0xC000
+
+# Everything the asset pipeline reads.
+ASSETS := data/game.ini $(wildcard data/img/*.png data/map/*.tmx data/path/* data/music/*.mml \
+            data/sfx/*.sfx data/text/*.txt) $(wildcard tool/*.py)
 
 all: $(PRJNAME).sms
 
-data.c: data/* data/sprites_tiles.psgcompr data/tileset_tiles.psgcompr data/background_tiles.psgcompr data/dracolich_tiles.psgcompr \
-		data/path1.path data/level1.bin
-	folder2c data data
-	
-data/sprites_tiles.psgcompr: data/img/sprites.png
-	BMP2Tile.exe data/img/sprites.png -noremovedupes -8x16 -palsms -fullpalette -savetiles data/sprites_tiles.psgcompr -savepalette data/sprites_palette.bin
-	
-data/tileset_tiles.psgcompr: data/img/tileset.png
-	BMP2Tile.exe data/img/tileset.png -noremovedupes -8x16 -palsms -fullpalette -savetiles data/tileset_tiles.psgcompr -savepalette data/tileset_palette.bin
+# gen/banks.mk lists the ROM banks the asset pipeline filled (BANKS, BANKFLAGS).
+-include gen/banks.mk
+BANKRELS := $(foreach n,$(BANKS),gen/bank$(n).rel)
 
-data/background_tiles.psgcompr: data/img/background.png
-	BMP2Tile.exe data/img/background.png -palsms -fullpalette -savetiles data/background_tiles.psgcompr -savetilemap data/background_tilemap.bin -savepalette data/background_palette.bin
-	
-data/dracolich_tiles.psgcompr: data/img/dracolich.png
-	BMP2Tile.exe data/img/dracolich.png -palsms -fullpalette -savetiles data/dracolich_tiles.psgcompr -savetilemap data/dracolich_tilemap.bin -savepalette data/dracolich_palette.bin
+# One run of the pipeline writes all of gen/.
+gen/banks.mk: $(ASSETS)
+	$(PYTHON) tool/build_assets.py
 
-data/%.path: data/path/%.spline.json
-	node tool/convert_splines.js $< $@
+gen/assets.h gen/tables.c: gen/banks.mk
 
-data/%.bin: data/map/%.tmx
-	node tool/convert_map.js $< $@
-	
-%.vgm: %.wav
-	psgtalk -r 512 -u 1 -m vgm $<
+%.rel: %.c gen/banks.mk $(wildcard *.h)
+	sdcc -c $(CFLAGS) $< -o $@
 
-%.rel : %.c
-	sdcc -c -mz80 --peep-file lib/peep-rules.txt $<
+gen/bank%.rel: gen/bank%.c
+	sdcc -c -mz80 --constseg BANK$* $< -o $@
 
-$(PRJNAME).sms: $(OBJS)
-	sdcc -o $(PRJNAME).ihx -mz80 --no-std-crt0 --data-loc 0xC000 lib/crt0_sms.rel $(OBJS) SMSlib.lib lib/PSGlib.rel
-	ihx2sms $(PRJNAME).ihx $(PRJNAME).sms	
+.PHONY: all clean test $(PRJNAME).ihx
+$(PRJNAME).ihx: $(OBJS) $(BANKRELS)
+	sdcc -o $(PRJNAME).ihx $(LDFLAGS) $(BANKFLAGS) lib/crt0_sms.rel $(OBJS) lib/SMSlib.lib lib/PSGlib.lib $(BANKRELS)
+	$(PYTHON) tool/check_rom.py $(PRJNAME).map
+
+$(PRJNAME).sms: $(PRJNAME).ihx
+	ihx2sms $(PRJNAME).ihx $(PRJNAME).sms
+
+test: $(PRJNAME).sms
+	smstest $(PRJNAME).sms test/playtest.txt
 
 clean:
-	rm *.sms *.sav *.asm *.sym *.rel *.noi *.map *.lst *.lk *.ihx data.*
+	rm -f *.sms *.sav *.asm *.sym *.rel *.noi *.map *.lst *.lk *.ihx *.rst
+	rm -rf gen

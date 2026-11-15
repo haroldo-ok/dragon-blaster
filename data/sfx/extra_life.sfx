@@ -1,0 +1,8 @@
+channels 2
+priority 7
+sweep 659 659 14 12 5
+sweep 784 784 14 12 5
+sweep 1319 1319 14 12 5
+sweep 1047 1047 14 12 5
+sweep 1175 1175 14 12 5
+sweep 1568 1568 14 0 16

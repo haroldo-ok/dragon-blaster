@@ -1,0 +1,5 @@
+# The dragon's breath: a short hiss on the noise channel, so that it never
+# interrupts the melody.
+channels 3
+priority 1
+nsweep 0 8 0 4

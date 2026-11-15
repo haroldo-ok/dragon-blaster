@@ -1,0 +1,188 @@
+# Automated playtest for smstest (the headless emulator bundled with the
+# devkitSMS skill):   smstest dragon_blaster.sms test/playtest.txt
+#
+# game_state: 0 title, 1 story, 2 playing, 3 boss, 4 stage clear,
+#             5 game over, 6 ending, 7 stage card
+symbols dragon_blaster.noi
+
+# --- Boot: the title screen must be visible --------------------------------
+run 200
+expectvdp display 1
+expectcolors 6
+expect game_state == 0 w1
+
+# --- Title -> story -> stage card -> stage 1 --------------------------------
+tap 1
+waituntil game_state == 1 120 w1
+run 30
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+waituntil game_state == 7 700 w1
+tap 2
+waituntil game_state == 2 600 w1
+expect stage_number == 0 w1
+expect lives == 3 w1
+expectcolors 6
+
+# --- Shooting brings points; the game keeps up with the display ---------------
+hold 2
+run 600
+expect score+4 > 0 w2
+expect game_ticks > 560 w2
+expect game_state == 2 w1
+
+# --- Skip to the end of the level: the boss shows up ---------------------------
+poke map_finished 1 w1
+waituntil game_state == 3 900 w1
+run 150
+expect boss_active == 1 w1
+expect boss_hp > 0 w2
+expectcolors 6
+
+# --- One last hit defeats it: stage clear, then the next stage ------------------
+poke lives 9 w1
+poke boss_hp 1 w1
+poke boss_hp+1 0 w1
+# (back to the plain lightning breath, which flies straight up)
+poke ply_ctl+1 0 w1
+hold left+2
+run 120
+hold right+2
+run 240
+hold left+2
+run 240
+hold 2
+waituntil game_state == 4 900 w1
+tap 1
+waituntil game_state == 7 600 w1
+expect stage_number == 1 w1
+
+# --- Last stage: beating the Dracolich leads to the ending ------------------------
+poke stage_number 4 w1
+tap 1
+waituntil game_state == 2 600 w1
+poke map_finished 1 w1
+waituntil game_state == 3 900 w1
+run 150
+poke lives 9 w1
+poke boss_hp 1 w1
+poke boss_hp+1 0 w1
+# (back to the plain lightning breath, which flies straight up)
+poke ply_ctl+1 0 w1
+hold left+2
+run 120
+hold right+2
+run 240
+hold left+2
+run 240
+hold up+2
+run 120
+hold 2
+waituntil game_state == 4 1200 w1
+tap 1
+waituntil game_state == 1 900 w1
+expectvdp display 1
+
+# --- ...and back to the title screen ------------------------------------------------
+run 30
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 60
+tap 1
+waituntil game_state == 0 1500 w1
+expect hi_score > 0 w2
+
+# --- Cheat code on the title screen: up up down down left right left right ------------
+run 120
+tap up
+run 4
+tap up
+run 4
+tap down
+run 4
+tap down
+run 4
+tap left
+run 4
+tap right
+run 4
+tap left
+run 4
+tap right
+run 4
+expect cheat_flags == 1 w1
+# (entering it again switches it off)
+tap up
+run 4
+tap up
+run 4
+tap down
+run 4
+tap down
+run 4
+tap left
+run 4
+tap right
+run 4
+tap left
+run 4
+tap right
+run 4
+expect cheat_flags == 0 w1
+
+# --- Game over: run out of lives, decline to continue --------------------------------
+tap 1
+waituntil game_state == 1 120 w1
+run 30
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+run 22
+tap 1
+waituntil game_state == 7 700 w1
+tap 1
+waituntil game_state == 2 600 w1
+hold none
+poke lives 1 w1
+waituntil game_state == 5 6000 w1
+run 60
+expectvdp display 1
+expectcolors 2
+waituntil game_state == 0 1200 w1
+spmin

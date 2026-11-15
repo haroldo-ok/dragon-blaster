@@ -1,0 +1,4 @@
+channels 2
+priority 4
+sweep 988 988 13 10 3
+sweep 1319 1319 13 0 9

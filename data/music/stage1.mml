@@ -1,0 +1,25 @@
+# Stage 1 - Emerald Plains. See tool/mml2psg.py for the syntax.
+@tempo 150
+@e1 = 15 14 13 12 11 10 9 9 8 8 7
+@e2 = 15 12 9 7 5 4 3 2 1 0
+@e3 = 11 13 15 14 13 12 12 11
+@e4 = 15 9 5 2 0
+@e5 = 15 13 11 9 7 5 3 2 1 0
+
+; ---- part 1 ----
+A o4 l8 v13 @e1  e4 g4 >c4 <b a | g2 e4 g4 | a4 >c4 e4 d c | <b2. r4
+A                >c4 e4 g4 f e | d2 <b4 >d4 | c4 <a4 f4 a g | g2. r4
+B o3 l8 v9 @e2   c e g e c e g e | c e g e c e g e | <a >c e c <a >c e c | <b >d g d <b >d g d
+B                c e g e c e g e | <b >d g d <b >d g d | <a >c f c <a >c f c | <b >d g d <b >d g d
+C o3 l4 v11 @e1  c c g c | c c g c | <a a >e <a> | g g d g
+C                c c g c | g g d g | f f c f | g g d g
+D l8 v10 @e4     [c g e g c g e g]8
+
+; ---- part 2 ----
+A                a4 a8 b >c4 <b a | g4 e4 e2 | f4 f8 g a4 g f | e2. r4
+A                a4 a8 b >c4 d e | d4 <b4 g2 | >c4 <b4 a4 g+4 | a2. r4
+B                <a >c e c <a >c e c | <b >e g e <b >e g e | <a >c f c <a >c f c | c e g e c e g e
+B                <a >c e c <a >c e c | <b >d g d <b >d g d | <a >c e c <b >e g+ e | <a >c e c <a >c e c
+C                <a a >e <a> | e e <b >e | f f c f | c c g c
+C                <a a >e <a> | g g d g | <a a> e e | <a a >e <a>
+D                [c g e g c g e g]7 c g e g c e e e

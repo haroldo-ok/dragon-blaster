@@ -1,0 +1,4 @@
+channels 23
+priority 7
+sweep 180 120 15 15 22 + nsweep 2 14 14 22
+sweep 120 110 15 0 24 + nsweep 2 14 0 24

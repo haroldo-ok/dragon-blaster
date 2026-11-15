@@ -1,0 +1,11 @@
+speed 2.5
+0 0
+70 50
+corner
+0 100
+corner
+70 150
+corner
+0 200
+corner
+70 250

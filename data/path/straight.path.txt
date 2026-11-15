@@ -1,0 +1,13 @@
+# Flight paths are lists of waypoints: "x y", in pixels, relative to the
+# point where the enemy enters (the top of the screen, at the column where
+# the wave was placed in Tiled). The enemy follows a smooth curve through
+# them. When the path ends it simply starts again from where the enemy is.
+#
+#   speed N     pixels per frame from here on (default 2)
+#   wait N      stay still for N frames
+#   corner      make a sharp turn at the previous waypoint
+#
+# Waves placed on the right half of the screen fly the path mirrored.
+speed 2
+0 0
+0 230

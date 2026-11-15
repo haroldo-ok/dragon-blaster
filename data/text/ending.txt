@@ -1,0 +1,26 @@
+# Story shown after the last boss.
+@picture dracolich
+With a final scream, the
+Dracolich crumbles to dust.
+His dark magic fades away.
+----
+The skies are clear again.
+
+The three sacred breaths are
+safe in the claws of a new
+guardian...
+
+  ... the DRAGON BLASTER!
+----
+DRAGON BLASTER
+
+Code and design
+  Haroldo-OK
+
+Art from OpenGameArt.org
+  Dragon Icon Pack
+  Space War Man shmup set
+  DawnLike tileset
+  Stendhal dragons
+
+Made with devkitSMS
