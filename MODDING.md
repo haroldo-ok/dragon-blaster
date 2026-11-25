@@ -28,13 +28,40 @@ The file is commented section by section. In short:
 
 * `[picture name]`: a big image for the background layer (bosses, title,
   story pages). Animated pictures stack their frames vertically.
-* `[enemy name]`: sprite, hit points, score, what it shoots and how often.
+* `[enemy name]`: sprite, hit points, score, what it shoots and how often,
+  and how it moves (see below).
 * `[wave name]`: *count* enemies of one kind following one path. The wave's
   `id` is the tile used to place it in Tiled.
 * `[boss name]`: picture, hit points, hit box, how it moves and its lists of
   attacks (normal and enraged).
 * `[stage N]`: name, tileset, map, music, boss. Stages are played in order;
   add `[stage 6]` and the game has six stages.
+
+### Homing enemies
+
+With `move = homing`, an enemy follows its wave's path for `lock` frames,
+then hunts the dragon for `chase` frames, then keeps its last heading and
+leaves the screen:
+
+```
+[enemy vampire_bat]
+move = homing
+lock = 24        ; frames on the wave's path before it locks on
+chase = 80       ; frames spent hunting (1..255)
+speed = 2.5      ; top speed, pixels per frame
+turn = 0.25      ; how fast it can change course, pixels per frame per frame
+```
+
+The enemy accelerates towards the dragon on each axis, so it overshoots and
+swings around when it misses. A low `turn` with a high `speed` makes wide,
+dodgeable swoops (the vampire bats); a low speed with a long `chase` makes
+something slow and relentless (the burning skulls). Use the path to set up
+the attack: the watchers use `hover`, so they wait, then dive. Any enemy can
+also shoot while homing.
+
+When too many waves overlap, a new wave waits (up to 4 in line) for a free
+slot instead of being skipped, and so does each enemy of a wave when all 6
+enemy slots are taken.
 
 Shot patterns, for enemies and bosses alike: `down`, `aimed`, `aimed3`,
 `spread3`, `spread5`, `ring`, `side`, `cross`, `weave`, `spiral`, `rain`.

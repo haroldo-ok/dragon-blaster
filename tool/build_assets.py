@@ -44,7 +44,7 @@ FIRST_BANK = 2
 PICTURE_BASE_TILE = 256   # pictures are always loaded at background tile 256...
 PICTURE_MAIN_TILES = 192  # ...up to the end of the tile area (tile 447)
 # During a boss fight these sprite tiles are not needed (they belong to the
-# regular enemies, or are blank), so a boss picture may use them as well.
+# regular enemies), so a boss picture may use them as well.
 # The game loads them back with the sprite sheet at the start of every stage.
 BOSS_EXTRA_TILES = [(64, 20), (128, 64), (212, 24)]
 BOSS_PICTURE_TILES = PICTURE_MAIN_TILES + sum(n for _, n in BOSS_EXTRA_TILES)
@@ -784,9 +784,27 @@ def build():
                  fire=int(sec.get('fire', '0')), flags=flags, index=len(enemies))
         if not (0 <= e['hp'] <= 255 and 0 <= e['score'] <= 255 and 0 <= e['fire'] <= 255):
             fail('[%s]: hp and fire must be 0..255, score 0..2550' % where)
+        homing = sec.get('move', 'path')
+        if homing not in ('path', 'homing'):
+            fail('[%s]: move must be "path" or "homing"' % where)
+        if homing == 'homing':
+            try:
+                lock = int(sec.get('lock', '30'))
+                chase = int(sec.get('chase', '120'))
+                max_speed = int(round(float(sec.get('speed', '2')) * 16))
+                turn = int(round(float(sec.get('turn', '0.2')) * 16))
+            except ValueError:
+                fail('[%s]: lock and chase are frames; speed and turn are pixels per frame' % where)
+            if not (0 <= lock <= 255 and 1 <= chase <= 255):
+                fail('[%s]: lock must be 0..255 and chase 1..255 frames' % where)
+            if not (1 <= max_speed <= 96 and 1 <= turn <= 32):
+                fail('[%s]: speed must be from 0.0625 to 6, and turn from 0.0625 to 2 pixels per frame' % where)
+        else:
+            lock = chase = max_speed = turn = 0
         enemies[name] = e
-        enemy_rows.append('\t{%d, %d, %d, %d, %d, %d, %d, %d, %d},\t/* %s */' % (
-            e['tile'], width // 8, e['frames'], e['anim'], e['hp'], e['score'], e['pattern'], e['fire'], flags, name))
+        enemy_rows.append('\t{%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d},\t/* %s */' % (
+            e['tile'], width // 8, e['frames'], e['anim'], e['hp'], e['score'], e['pattern'], e['fire'], flags,
+            lock, chase, max_speed, turn, name))
 
     waves = {}
     for name, sec in sections('wave'):

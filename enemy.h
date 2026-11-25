@@ -14,6 +14,9 @@ typedef struct enemy {
 	unsigned char fire_timer;
 	unsigned char flash;
 	struct spawner *spawner;	/* the wave it belongs to */
+	unsigned int age;		/* frames since it entered */
+	int vx, vy;			/* homing speed, 1/16 pixel per frame */
+	unsigned char fx, fy;		/* homing position, fraction of pixel (0..15) */
 } enemy;
 
 extern enemy enemies[ENEMY_MAX];

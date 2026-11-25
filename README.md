@@ -5,7 +5,9 @@ A dragon themed shoot-em-up for the Sega Master System. Originally made for the
 
 * 5 stages, each with its own scenery, music and enemy waves
 * 5 animated bosses with several attack patterns and an enraged second phase
-* 9 kinds of enemies, 9 breath weapons (3 elements and every combination of two)
+* 12 kinds of enemies, including 3 that hunt the dragon down (vampire bats,
+  burning skulls and watcher eyes)
+* 9 breath weapons (3 elements and every combination of two)
 * Intro story, stage cards, ending and credits
 * Music and sound effects
 * Lives, continues, extra lives, high score, pause

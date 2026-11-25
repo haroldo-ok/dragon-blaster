@@ -189,7 +189,7 @@ def main():
     objects = populate(len(grid), rnd, ids, [
         ('imps_loop', 30, 0), ('imps_line', 25, 0), ('imps_sway', 20, 0.1), ('bats_zigzag', 20, 0.2),
         ('bats_cross', 15, 0.3), ('wisps_sway', 12, 0.45), ('gazer_hover', 8, 0.6), ('tower', 8, 0.5),
-        ('imps_fast', 10, 0.7),
+        ('imps_fast', 10, 0.7), ('vampire_bats', 6, 0.45),
     ], 8, 5, [(0.08, 7, 'fire'), (0.3, 4, 'gem'), (0.45, 10, 'wind'), (0.7, 6, 'lightning'), (0.88, 8, 'gem')])
     write_tmx(('level1', 'plains'), grid, objects)
 
@@ -199,7 +199,8 @@ def main():
     objects = populate(len(grid), rnd, ids, [
         ('bats_dive', 22, 0), ('imps_fast', 18, 0), ('wisps_sway', 18, 0), ('skulls_line', 16, 0.1),
         ('wisps_uturn', 14, 0.2), ('gazer_hover', 14, 0.25), ('tower', 14, 0.15), ('bats_loop', 14, 0.3),
-        ('fire_drake_swoop', 12, 0.45), ('gazers_hover', 8, 0.7),
+        ('fire_drake_swoop', 12, 0.45), ('gazers_hover', 8, 0.7), ('vampire_bats', 8, 0.2),
+        ('watchers', 6, 0.4), ('vampire_bats_sway', 6, 0.6),
     ], 7, 4.5, [(0.1, 5, 'wind'), (0.35, 9, 'fire'), (0.55, 3, 'gem'), (0.75, 11, 'lightning'), (0.9, 7, 'gem')])
     write_tmx(('level2', 'desert'), grid, objects)
 
@@ -209,7 +210,8 @@ def main():
     objects = populate(len(grid), rnd, ids, [
         ('imps_sway', 16, 0), ('bats_cross', 18, 0), ('skulls_arc', 18, 0), ('frost_drake_hover', 14, 0.1),
         ('wisps_circle', 14, 0.15), ('tower', 12, 0.2), ('gazers_hover', 12, 0.3), ('frost_drakes_arc', 12, 0.5),
-        ('bats_dive', 12, 0.4), ('gazers_cross', 8, 0.7),
+        ('bats_dive', 12, 0.4), ('gazers_cross', 8, 0.7), ('hellskulls', 8, 0.1),
+        ('vampire_bats', 8, 0.3), ('watchers', 6, 0.5), ('hellskulls_arc', 6, 0.7),
     ], 6.5, 4, [(0.1, 8, 'lightning'), (0.3, 4, 'fire'), (0.5, 10, 'life'), (0.65, 6, 'wind'), (0.85, 9, 'gem')])
     write_tmx(('level3', 'frozen'), grid, objects)
 
@@ -220,6 +222,8 @@ def main():
         ('tower', 22, 0), ('skulls_dive', 18, 0), ('imps_fast', 14, 0), ('bats_dive', 14, 0),
         ('fire_drakes_line', 14, 0.1), ('wisps_uturn', 14, 0.1), ('gazers_cross', 12, 0.25),
         ('bone_drake_hover', 12, 0.4), ('fire_drake_swoop', 10, 0.3), ('gazers_hover', 10, 0.5),
+        ('vampire_bats_sway', 8, 0.1), ('watchers_cross', 8, 0.3), ('hellskulls', 8, 0.45),
+        ('watchers', 6, 0.6), ('hellskulls_arc', 6, 0.8),
     ], 6, 3.5, [(0.08, 6, 'fire'), (0.3, 10, 'wind'), (0.5, 4, 'gem'), (0.6, 8, 'lightning'), (0.8, 5, 'life')])
     write_tmx(('level4', 'fortress'), grid, objects)
 
@@ -230,6 +234,8 @@ def main():
         ('skulls_dive', 16, 0), ('bone_drake_hover', 14, 0), ('gazers_cross', 14, 0), ('bats_loop', 14, 0),
         ('wisps_circle', 14, 0), ('tower', 14, 0), ('frost_drakes_arc', 12, 0.15), ('fire_drakes_line', 12, 0.15),
         ('bone_drakes_swoop', 12, 0.4), ('skulls_arc', 12, 0.3), ('gazers_hover', 10, 0.5),
+        ('hellskulls', 10, 0), ('vampire_bats_sway', 10, 0.2), ('watchers_cross', 10, 0.35),
+        ('hellskulls_arc', 8, 0.5), ('watchers', 8, 0.65),
     ], 5.5, 3.5, [(0.06, 7, 'wind'), (0.25, 4, 'fire'), (0.45, 11, 'lightning'), (0.55, 6, 'life'),
                   (0.75, 9, 'fire'), (0.92, 7, 'life')])
     write_tmx(('level5', 'lair'), grid, objects)

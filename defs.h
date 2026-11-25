@@ -46,6 +46,11 @@ typedef struct enemy_type {
 	unsigned char hp, score;
 	unsigned char pattern, fire_delay;
 	unsigned char flags;
+	/* Homing (when chase is not zero): follows its wave's path for "lock"
+	   frames, then steers towards the dragon for "chase" frames, then flies
+	   straight on. Speeds are in 1/16 pixel per frame. */
+	unsigned char lock, chase;
+	unsigned char max_speed, turn;
 } enemy_type;
 
 typedef struct wave_def {

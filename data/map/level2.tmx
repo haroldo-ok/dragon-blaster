@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="2021.03.23" orientation="orthogonal" renderorder="right-down" width="16" height="270" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="69">
+<map version="1.5" tiledversion="2021.03.23" orientation="orthogonal" renderorder="right-down" width="16" height="270" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="72">
  <tileset firstgid="1" source="tileset_desert.tsx"/>
  <tileset firstgid="49" source="objects.tsx"/>
  <layer id="1" name="Map" width="16" height="270">
@@ -345,5 +345,8 @@
   <object id="66" gid="52" x="192" y="368" width="16" height="16"/>
   <object id="67" gid="60" x="32" y="336" width="16" height="16"/>
   <object id="68" gid="72" x="208" y="304" width="16" height="16"/>
+  <object id="69" gid="73" x="128" y="3376" width="16" height="16"/>
+  <object id="70" gid="77" x="48" y="2416" width="16" height="16"/>
+  <object id="71" gid="74" x="112" y="1472" width="16" height="16"/>
  </objectgroup>
 </map>

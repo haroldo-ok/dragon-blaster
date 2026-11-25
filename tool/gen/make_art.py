@@ -436,6 +436,19 @@ def make_sprites():
     gem.paste(ascii_full(GEM), (3, 4))
     put(gem, 104)                      # tile 208
 
+    # --- Homing enemies: recoloured versions of the bat, the skull and the gazer.
+    #     They use sprite tiles 212..235, which a boss picture borrows during the
+    #     boss fight; that is fine, as every enemy is gone by then.
+    vampire = {'p': 'r', 'B': 'd'}
+    hellfire = {'w': 'y', 'd': 'o', 'r': 'w', 'y': 'w'}
+    watcher = {'B': 'G', 'b': 'g', 'p': 'l'}
+    put(remap(ascii_half(BAT_A), vampire), 106)       # tile 212
+    put(remap(ascii_half(BAT_B), vampire), 108)
+    put(remap(ascii_half(SKULL_A), hellfire), 110)    # tile 220
+    put(remap(ascii_half(SKULL_B), hellfire), 112)
+    put(remap(gazer(0), watcher), 114)                # tile 228
+    put(remap(gazer(1), watcher), 116)
+
     # --- Drop shadow under the score digits and the heart, so that they can be
     #     read over bright scenery ------------------------------------------------
     px = sheet.load()
