@@ -1,5 +1,5 @@
 # Story shown after the last boss.
-@picture dracolich
+@picture dracolich_still
 With a final scream, the
 Dracolich crumbles to dust.
 His dark magic fades away.
@@ -21,6 +21,7 @@ Art from OpenGameArt.org
   Dragon Icon Pack
   Space War Man shmup set
   DawnLike tileset
-  Stendhal dragons
+  Stendhal dragons and Death
+    by Kimmo Rundelin
 
 Made with devkitSMS

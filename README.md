@@ -4,7 +4,7 @@ A dragon themed shoot-em-up for the Sega Master System. Originally made for the
 [SHMUP JAM 1](https://itch.io/jam/shmup-jam-1-dragons), now grown into a full game:
 
 * 5 stages, each with its own scenery, music and enemy waves
-* 5 bosses with several attack patterns and an enraged second phase
+* 5 animated bosses with several attack patterns and an enraged second phase
 * 9 kinds of enemies, 9 breath weapons (3 elements and every combination of two)
 * Intro story, stage cards, ending and credits
 * Music and sound effects
@@ -81,10 +81,20 @@ BMP2Tile, Node.js and the other external converters are no longer needed:
 * Main character, enemy: https://opengameart.org/content/dragon-icon-pack
 * Lightning: https://opengameart.org/content/space-war-man-platform-shmup-set
 * Fire, wind, background: https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181
-* Dracolich: https://opengameart.org/content/stendhal-dragons
+* Bosses, from the [Stendhal](https://stendhalgame.org) project, licensed
+  [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) or later:
+  * Dracolich (bone dragon), Emerald Wyrm (green dragon) and Frost Hydra
+    (two-headed dragon): [Stendhal dragons](https://opengameart.org/content/stendhal-dragons),
+    by Kimmo Rundelin (kiheru)
+  * Infernal Reaper (golden death): [Stendhal Death](https://opengameart.org/content/stendhal-death),
+    by Kimmo Rundelin (kiheru)
+  * The Stendhal source sheets are in `data/img/original/stendhal/`; see the
+    `CREDITS.txt` there.
 
-The extra enemies, the bosses and the stage tilesets were derived from those
-same resources by `tool/gen/make_art.py`.
+The extra enemies, the Gazer and the stage tilesets were derived from those
+same resources by `tool/gen/make_art.py`, which also converts the Stendhal
+boss animations to Master System colours. The boss pictures are therefore
+derivative works under CC BY-SA 3.0 as well.
 
 ## Tools used
 

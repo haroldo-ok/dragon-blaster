@@ -454,120 +454,84 @@ def make_sprites():
 # ---------------------------------------------------------------------------
 # Bosses
 # ---------------------------------------------------------------------------
-def scale2x(im):
-    w, h = im.size
-    src = im.load()
-    out = Image.new('P', (w * 2, h * 2), 0)
-    o = out.load()
-
-    def px(x, y):
-        return src[min(max(x, 0), w - 1), min(max(y, 0), h - 1)]
-
-    for y in range(h):
-        for x in range(w):
-            p = px(x, y)
-            a, b, c, dd = px(x, y - 1), px(x + 1, y), px(x - 1, y), px(x, y + 1)
-            o[x * 2, y * 2] = c if (c == a and c != dd and a != b) else p
-            o[x * 2 + 1, y * 2] = a if (a == b and a != c and b != dd) else p
-            o[x * 2, y * 2 + 1] = dd if (dd == c and dd != b and c != a) else p
-            o[x * 2 + 1, y * 2 + 1] = b if (b == dd and b != a and dd != c) else p
-    return out
-
-
 def sms(r, g, b):
     return (r * 85, g * 85, b * 85)
 
 
-def thin_outline(im, outline, steps):
-    """Scaled-up outlines are too thick: eat into them from the inside."""
-    for _ in range(steps):
-        src = im.copy().load()
-        dst = im.load()
-        w, h = im.size
-        for y in range(h):
-            for x in range(w):
-                if src[x, y] != outline:
-                    continue
-                best = None
-                touches_bg = False
-                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)):
-                    nx, ny = x + dx, y + dy
-                    if 0 <= nx < w and 0 <= ny < h:
-                        n = src[nx, ny]
-                        if n == 0:
-                            touches_bg = True
-                        elif n != outline and best is None:
-                            best = n
-                    else:
-                        touches_bg = True
-                if best is not None and not touches_bg:
-                    dst[x, y] = best
-    return im
+# Front-facing animations from the Stendhal sprites (CC BY-SA 3.0), kept in
+# data/img/original/stendhal. Each sheet has 3 walking frames per direction;
+# row 2 faces the viewer.
+STENDHAL = os.path.join(IMG, 'original', 'stendhal')
+
+STENDHAL_BOSSES = [
+    # source sheet, output picture
+    ('green_dragon.png', 'boss_emerald_wyrm.png'),
+    ('twin_head_dragon.png', 'boss_frost_hydra.png'),
+    ('golden_death.png', 'boss_reaper.png'),
+    ('bone_dragon.png', 'dracolich.png'),
+]
 
 
-def shade(im, ramp):
-    """Adds a dithered shadow on the lower right of every colour area."""
-    src = im.copy().load()
-    dst = im.load()
-    w, h = im.size
-    darker = {ramp[i]: ramp[i - 1] for i in range(1, len(ramp))}
-    for y in range(h):
-        for x in range(w):
-            p = src[x, y]
-            if p not in darker:
-                continue
-            near = False
-            for d in (1, 2, 3):
-                for nx, ny in ((x + d, y), (x, y + d)):
-                    if nx < w and ny < h and src[nx, ny] != p and src[nx, ny] != 0:
-                        near = True
-            if near and (x + y) % 2 == 0:
-                dst[x, y] = darker[p]
-    return im
+def sms_level(c):
+    return min(range(4), key=lambda i: abs(i * 85 - c))
 
 
-def scaled_boss(frames, palette, ramp_letters, name, thin=1, crop=None):
-    out = Image.new('P', (frames[0].width * 4, frames[0].height * 4 * len(frames)), 0)
+def stendhal_boss(sheet, out_name, row=2, max_colours=15):
+    """Converts the front-facing frames of a Stendhal sheet to a picture with
+    the frames stacked vertically, in SMS colours."""
+    im = Image.open(os.path.join(STENDHAL, sheet)).convert('RGBA')
+    fw, fh = im.width // 3, im.height // 4
+    frames = [im.crop((c * fw, row * fh, (c + 1) * fw, (row + 1) * fh)) for c in range(3)]
+
+    # Common bounding box, grown to whole 8x8 tiles.
+    box = None
+    for f in frames:
+        b = f.getbbox()
+        box = b if box is None else (min(box[0], b[0]), min(box[1], b[1]), max(box[2], b[2]), max(box[3], b[3]))
+    w = (box[2] - box[0] + 7) // 8 * 8
+    h = (box[3] - box[1] + 7) // 8 * 8
+    x0 = max(0, min(box[0] - (w - (box[2] - box[0])) // 2, fw - w))
+    y0 = max(0, min(box[1] - (h - (box[3] - box[1])) // 2, fh - h))
+    frames = [f.crop((x0, y0, x0 + w, y0 + h)) for f in frames]
+
+    # Every pixel to the nearest of the 64 SMS colours; the rarest colours are
+    # merged into their closest neighbours until 15 are left (+ the sky).
+    counts = {}
+    for f in frames:
+        for r, g, b, a in f.getdata():
+            if a >= 128:
+                c = (sms_level(r), sms_level(g), sms_level(b))
+                counts[c] = counts.get(c, 0) + 1
+    pal = sorted(counts, key=lambda c: -counts[c])
+    remap = {c: c for c in pal}
+    while len(pal) > max_colours:
+        victim = pal.pop()
+        best = min(pal, key=lambda c: sum((p - q) ** 2 for p, q in zip(c, victim)))
+        for k, v in remap.items():
+            if v == victim:
+                remap[k] = best
+    pal.sort(key=lambda c: sum(c))
+    index = {c: i + 1 for i, c in enumerate(pal)}
+
+    out = Image.new('P', (w, h * 3), 0)
     for i, f in enumerate(frames):
-        big = scale2x(scale2x(f))
-        thin_outline(big, IDX['k'], thin)
-        shade(big, [IDX[c] for c in ramp_letters])
-        out.paste(big, (0, i * big.height))
-    pal = []
-    for i in range(16):
-        pal += list(palette.get(CH[i], sms(0, 0, 0)))
-    pal[0:3] = (0, 255, 255)
-    out.putpalette(pal + [0] * (768 - 48))
-    out.save(os.path.join(IMG, name))
+        data = []
+        for r, g, b, a in f.getdata():
+            data.append(index[remap[(sms_level(r), sms_level(g), sms_level(b))]] if a >= 128 else 0)
+        frame = Image.new('P', (w, h))
+        frame.putdata(data)
+        out.paste(frame, (0, i * h))
+    flat = [0, 255, 255]
+    for c in pal:
+        flat += [v * 85 for v in c]
+    out.putpalette(flat + [0] * (768 - len(flat)))
+    out.save(os.path.join(IMG, out_name))
     return out
 
 
-def make_scaled_bosses():
-    src = Image.open(os.path.join(IMG, 'original', 'sprites.png'))
-    imp = src.crop((8, 16, 24, 32))
-    wyrm = [src.crop((8 + 24 * i, 0, 32 + 24 * i, 16)).transpose(Image.FLIP_TOP_BOTTOM)
-            for i in range(4)]
-
-    # Stage 1: the imp chieftain (static, a giant version of the common imp)
-    scaled_boss([imp], {
-        'k': sms(0, 0, 0), 'd': sms(1, 1, 1), 'w': sms(3, 3, 3),
-        'G': sms(1, 0, 1), 'g': sms(2, 0, 2), 'l': sms(3, 1, 3), 'L': sms(3, 2, 3),
-        'y': sms(3, 3, 0), 'r': sms(3, 0, 0), 'o': sms(3, 2, 0),
-    }, 'Ggl', 'boss_chieftain.png', thin=2)
-
-    # Stage 3: frost wyrm (two flapping frames)
-    scaled_boss([wyrm[0], wyrm[1]], {
-        'k': sms(0, 0, 1), 'd': sms(1, 1, 2), 'w': sms(3, 3, 3),
-        'G': sms(0, 1, 2), 'g': sms(0, 2, 3), 'l': sms(1, 3, 3), 'L': sms(3, 3, 3),
-        'r': sms(3, 0, 2), 'o': sms(3, 2, 3), 'y': sms(3, 3, 0),
-    }, 'Ggl', 'boss_frost_wyrm.png')
-
-    # Stage 4: inferno wyrm
-    scaled_boss([wyrm[2], wyrm[3]], {
-        'k': sms(1, 0, 0), 'd': sms(1, 1, 1), 'w': sms(3, 3, 2),
-        'G': sms(2, 0, 0), 'g': sms(3, 1, 0), 'l': sms(3, 2, 0), 'L': sms(3, 3, 1),
-        'r': sms(0, 3, 3), 'o': sms(3, 3, 3), 'y': sms(3, 3, 0),
-    }, 'Ggl', 'boss_inferno_wyrm.png')
+def make_stendhal_bosses():
+    for sheet, name in STENDHAL_BOSSES:
+        stendhal_boss(sheet, name)
 
 
 def make_gazer_boss():
@@ -804,7 +768,7 @@ def make_tileset(name, spec):
 
 def main():
     make_sprites()
-    make_scaled_bosses()
+    make_stendhal_bosses()
     make_gazer_boss()
     make_logo()
     for name, spec in TILESETS.items():

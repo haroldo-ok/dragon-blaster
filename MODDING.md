@@ -90,11 +90,40 @@ Palette entry 0 is transparent / the background colour.
   animation frames side by side.
 * `tileset_<name>.png` (256x48): 16x3 scenery tiles of 16x16 pixels, with
   their own palette.
-* Pictures (bosses, `title_logo.png`, `dracolich.png`): any size up to 192
-  different 8x8 tiles, own palette. On story pages, palette entry 6 is also
-  the colour of the text.
+* Pictures (bosses, `title_logo.png`, `dracolich.png`): own palette; animated
+  pictures stack their frames vertically. On story pages, palette entry 6 is
+  also the colour of the text.
 
-`data/img/original/` keeps the untouched jam assets. `tool/gen/make_art.py`
+### How big can a picture be?
+
+Pictures are cut into 8x8 tiles, and identical or mirrored tiles are stored
+once. A picture on the title or story screens can use 192 different tiles. A
+boss picture can use 300: during a boss fight, the sprite tiles of the regular
+enemies are not needed, so the boss borrows them (`BOSS_EXTRA_TILES` in
+`tool/build_assets.py` and `boss_extra_tiles` in the game).
+
+A 96x128 boss has 192 tiles per frame, so three different frames would need
+over 500. When an animation does not fit, the build lets the frames other than
+`key_frame` reuse a stored tile that differs from theirs by a few pixels, and
+picks the smallest difference that fits. `make` prints it for each picture:
+
+```
+picture boss_emerald_wyrm  12x14 tiles, 3 frame(s), 289/300 tiles, similar tiles reused (up to 7 pixels apart)
+```
+
+Up to about 8 pixels (of 64) is hard to notice while the boss moves. If it
+needs more than 16, the build stops: use fewer frames or a smaller picture.
+Make the frame shown most often the `key_frame`: it stays pixel-perfect.
+
+To show a boss on a story page, add a second `[picture]` with the same file
+and `still = <frame>`. The story pages use `dracolich_still` that way.
+
+Boss animations play with `animation = loop` (0 1 2 0 1 2) or
+`animation = pingpong` (0 1 2 1 0), at `anim` game frames per picture.
+
+`data/img/original/` keeps the untouched jam assets, and
+`data/img/original/stendhal/` the Stendhal sheets the bosses come from (three
+walking frames per direction; row 2 faces the viewer). `tool/gen/make_art.py`
 and `tool/gen/make_levels.py` are the scripts that produced the current art
 and levels from them; they are not part of the build, and running them
 overwrites the PNG and TMX files.

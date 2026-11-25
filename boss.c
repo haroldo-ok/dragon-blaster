@@ -35,6 +35,7 @@ static struct boss_ctl {
 	unsigned char rage;
 
 	unsigned char frame, frame_delay, frame_dirty;
+	signed char frame_step;			/* +1 or -1 for ping-pong animations */
 	unsigned char flash, flash_cooldown;
 	unsigned char intro;			/* frames left of the entrance */
 	unsigned char dying;			/* frames left of the death sequence */
@@ -87,6 +88,7 @@ void start_boss(unsigned char boss_number, unsigned char sky) {
 	boss.shot_delay = 60;
 	boss.rage = 0;
 	boss.frame = 0;
+	boss.frame_step = 1;
 	boss.frame_delay = boss.def->anim_delay;
 	boss.frame_dirty = 0;
 	boss.flash = 0;
@@ -266,8 +268,16 @@ void handle_boss(void) {
 		if (boss.frame_delay) {
 			boss.frame_delay--;
 		} else {
-			boss.frame++;
-			if (boss.frame == boss.pic->frames) boss.frame = 0;
+			if (boss.def->anim_mode == BOSS_ANIM_PINGPONG) {
+				// 0 1 2 1 0 1 2 ...: turn around at either end
+				if (boss.frame + boss.frame_step >= boss.pic->frames || (!boss.frame && boss.frame_step < 0)) {
+					boss.frame_step = -boss.frame_step;
+				}
+				boss.frame += boss.frame_step;
+			} else {
+				boss.frame++;
+				if (boss.frame == boss.pic->frames) boss.frame = 0;
+			}
 			boss.frame_delay = boss.rage ? boss.def->anim_delay >> 1 : boss.def->anim_delay;
 			boss.frame_dirty = 1;
 		}

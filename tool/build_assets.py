@@ -41,7 +41,14 @@ GEN = os.path.join(ROOT, 'gen')
 
 BANK_SIZE = 16384 - 64
 FIRST_BANK = 2
-PICTURE_BASE_TILE = 256   # pictures are always loaded at background tile 256
+PICTURE_BASE_TILE = 256   # pictures are always loaded at background tile 256...
+PICTURE_MAIN_TILES = 192  # ...up to the end of the tile area (tile 447)
+# During a boss fight these sprite tiles are not needed (they belong to the
+# regular enemies, or are blank), so a boss picture may use them as well.
+# The game loads them back with the sprite sheet at the start of every stage.
+BOSS_EXTRA_TILES = [(64, 20), (128, 64), (212, 24)]
+BOSS_PICTURE_TILES = PICTURE_MAIN_TILES + sum(n for _, n in BOSS_EXTRA_TILES)
+MAX_TOLERANCE = 16        # most pixels a reused tile may differ by (of 64)
 WAVE_SLOTS = 48           # object ids 0..47 are waves, 48.. are items
 ITEMS = ['lightning', 'fire', 'wind', 'life', 'gem']
 PATTERNS = ['none', 'down', 'aimed', 'spread3', 'spread5', 'ring', 'weave',
@@ -120,31 +127,105 @@ def tiles_8x16(im):
     return bytes(out)
 
 
-def picture(im, frames):
-    """Deduplicated tiles (flips included) + one tilemap per animation frame."""
-    px = im.load()
+def tile_slot(i):
+    """VRAM tile used for the i-th tile of a picture."""
+    if i < PICTURE_MAIN_TILES:
+        return PICTURE_BASE_TILE + i
+    i -= PICTURE_MAIN_TILES
+    for start, count in BOSS_EXTRA_TILES:
+        if i < count:
+            return start + i
+        i -= count
+    raise IndexError(i)
+
+
+def picture(im, frames, key_frame=0, limit=PICTURE_MAIN_TILES, still=None):
+    """Tiles + one tilemap per animation frame.
+
+    Tiles are shared between frames, flipped copies included. When the
+    animation needs more tiles than the limit, the frames other than the key
+    frame may reuse a tile that differs from theirs by a few pixels: the
+    smallest tolerance that fits is searched for automatically.
+    Returns (tiles, tilemap, w, h, tile count, tolerance used)."""
+    import numpy as np
+
     if im.height % frames or (im.height // frames) % 8:
         fail('picture height is not a multiple of 8 x frames')
-    w, h = im.width // 8, im.height // frames // 8
-    tiles, index, tilemap = [], {}, []
-    for ty in range(im.height // 8):
-        for tx in range(w):
-            t = tile_bytes(px, tx * 8, ty * 8)
-            entry = None
-            for hf in (0, 1):
-                for vf in (0, 1):
-                    key = flip_tile(t, hf, vf)
-                    if key in index:
-                        entry = index[key] | (hf << 9) | (vf << 10)
-                        break
-                if entry is not None:
-                    break
-            if entry is None:
-                index[t] = len(tiles)
-                entry = len(tiles)
-                tiles.append(t)
-            tilemap.append(entry + PICTURE_BASE_TILE)
-    return b''.join(tiles), struct.pack('<%dH' % len(tilemap), *tilemap), w, h, len(tiles)
+    fh = im.height // frames
+    if still is not None:
+        if not 0 <= still < frames:
+            fail('"still" must be a frame number from 0 to %d' % (frames - 1))
+        im = im.crop((0, still * fh, im.width, (still + 1) * fh))
+        frames, key_frame = 1, 0
+    if not 0 <= key_frame < frames:
+        fail('"key_frame" must be a frame number from 0 to %d' % (frames - 1))
+    w, h = im.width // 8, fh // 8
+    pixels = np.array(im, dtype=np.uint8)
+
+    def tile_pixels(frame, tx, ty):
+        y = frame * fh + ty * 8
+        return pixels[y:y + 8, tx * 8:tx * 8 + 8]
+
+    def encode(tolerance):
+        tiles = []                      # 8x8 arrays
+        stack = np.zeros((0, 4, 64), dtype=np.uint8)   # every tile in its 4 orientations
+        maps = {}
+        order = [key_frame] + [f for f in range(frames) if f != key_frame]
+        for frame in order:
+            entries = []
+            for ty in range(h):
+                for tx in range(w):
+                    t = tile_pixels(frame, tx, ty)
+                    entry = None
+                    if len(tiles):
+                        # differences against each tile, as is / h-flipped / v-flipped / both
+                        diff = (stack != t.reshape(1, 1, 64)).sum(axis=2)
+                        best = np.unravel_index(np.argmin(diff), diff.shape)
+                        allowed = tolerance if frame != key_frame else 0
+                        if diff[best] <= allowed:
+                            orient = best[1]
+                            entry = (best[0], orient & 1, orient >> 1)
+                    if entry is None:
+                        tiles.append(t)
+                        variants = np.stack([t, t[:, ::-1], t[::-1, :], t[::-1, ::-1]]).reshape(1, 4, 64)
+                        stack = np.concatenate([stack, variants])
+                        entry = (len(tiles) - 1, 0, 0)
+                    entries.append(entry)
+            maps[frame] = entries
+        return tiles, maps
+
+    tolerance = 0
+    tiles, maps = encode(0)
+    if len(tiles) > limit:
+        lo, hi = 1, MAX_TOLERANCE
+        if len(encode(hi)[0]) > limit:
+            fail('needs %d tiles even when reusing similar tiles; the limit is %d. Use fewer '
+                 'frames, a smaller picture, or frames that differ less' % (len(tiles), limit))
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if len(encode(mid)[0]) <= limit:
+                hi = mid
+            else:
+                lo = mid + 1
+        tolerance = lo
+        tiles, maps = encode(tolerance)
+
+    data = b''.join(tile_bytes(_PixelAccess(t), 0, 0) for t in tiles)
+    tilemap = []
+    for frame in range(frames):
+        for index, hf, vf in maps[frame]:
+            tilemap.append(tile_slot(index) | (hf << 9) | (vf << 10))
+    return data, struct.pack('<%dH' % len(tilemap), *tilemap), w, h, len(tiles), tolerance
+
+
+class _PixelAccess:
+    """Lets tile_bytes() read an 8x8 numpy array like a PIL pixel access object."""
+
+    def __init__(self, arr):
+        self.arr = arr
+
+    def __getitem__(self, xy):
+        return int(self.arr[xy[1], xy[0]])
 
 
 # ---------------------------------------------------------------------------
@@ -599,22 +680,46 @@ def build():
         tilesets[name] = len(tilesets)
     tileset_names = list(tilesets)
 
+    # Pictures shown by the title and story screens share the screen with the
+    # font, so only bosses get the bigger budget.
+    boss_pictures = set()
+    for sec_name in ini.sections():
+        if sec_name.startswith('boss ') and 'picture' in ini[sec_name]:
+            boss_pictures.add(ini[sec_name]['picture'])
+    screen_pictures = {'title_logo'}
+    for p in glob.glob(os.path.join(DATA, 'text', '*.txt')):
+        with open(p) as f:
+            screen_pictures |= set(re.findall(r'^@picture\s+(\w+)', f.read(), re.M))
+
     pictures = {}
     picture_info = []
     for name, sec in sections('picture'):
-        fname = need(sec, 'picture ' + name, 'file')
+        where = 'picture ' + name
+        fname = need(sec, where, 'file')
         frames = int(sec.get('frames', '1'))
+        still = int(sec['still']) if 'still' in sec else None
+        if name in boss_pictures and name not in screen_pictures:
+            limit = BOSS_PICTURE_TILES
+        else:
+            limit = PICTURE_MAIN_TILES
         im = load_indexed(os.path.join(DATA, 'img', fname))
-        tiles, tilemap, w, hh, count = picture(im, frames)
-        if count > 192:
-            fail('picture %s needs %d tiles; the limit is 192' % (name, count))
+        try:
+            tiles, tilemap, w, hh, count, tol = picture(im, frames, int(sec.get('key_frame', '0')), limit, still)
+        except BuildError as e:
+            fail('[%s] (%s): %s%s' % (where, fname, e, '' if limit == BOSS_PICTURE_TILES else
+                 '. Pictures shown on the title or story screens can use 192 tiles at most; '
+                 'make a "still" copy of a boss picture for those (see game.ini)'))
+        if still is not None:
+            frames = 1
         sym = 'pic_' + c_name(name)
         packer.add([(sym + '_tiles', 'unsigned char', tiles),
                     (sym + '_tilemap', 'unsigned int', tilemap),
                     (sym + '_palette', 'unsigned char', sms_palette(im))])
         pictures[name] = len(pictures)
         picture_info.append((name, sym, len(tiles), w, hh, frames, count))
-        report.append('picture %-18s %2dx%-2d tiles, %d frame(s), %3d unique tiles' % (name, w, hh, frames, count))
+        report.append('picture %-18s %2dx%-2d tiles, %d frame(s), %3d/%d tiles%s' % (
+            name, w, hh, frames, count, limit,
+            ', similar tiles reused (up to %d pixels apart)' % tol if tol else ''))
 
     # --- music ------------------------------------------------------------------
     music = {}
@@ -720,9 +825,10 @@ def build():
             attack_chunks.append('static const boss_attack %s%s[] = {%s, {0, 0, 0}};\n' % (
                 sym, suffix, ', '.join('{%d, %d, %d}' % a for a in lst)))
         move = lookup({m: i for i, m in enumerate(MOVES)}, sec.get('move', 'wander'), 'move', where)
-        boss_rows.append('\t{"%s", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %s_attacks, %s_rage_attacks, %d},' % (
+        animation = lookup({'loop': 0, 'pingpong': 1}, sec.get('animation', 'loop'), 'animation', where)
+        boss_rows.append('\t{"%s", %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %s_attacks, %s_rage_attacks, %d},' % (
             sec.get('name', name.upper()), pic, hp, rage_hp, hit[0], hit[1], hit[2], hit[3],
-            muzzle[0], muzzle[1], int(sec.get('anim', '16')), move,
+            muzzle[0], muzzle[1], int(sec.get('anim', '16')), animation, move,
             int(sec.get('speed', '1')), int(sec.get('rage_speed', '2')), sym, sym,
             int(sec.get('score', '5000')) // 100))
         bosses[name] = len(bosses)
@@ -791,6 +897,8 @@ def build():
     h.append('#define STAGE_COUNT (%d)' % len(stage_rows))
     h.append('#define WAVE_COUNT (%d)' % WAVE_SLOTS)
     h.append('#define ITEM_OBJECT_BASE (%d)\n' % WAVE_SLOTS)
+    h.append('#define PICTURE_MAIN_TILES (%d)' % PICTURE_MAIN_TILES)
+    h.append('extern const unsigned char boss_extra_tiles[];')
     for t in ('picture_def pictures', 'tileset_def tilesets', 'music_def musics', 'sfx_def sfxs',
               'enemy_type enemy_types', 'wave_def waves', 'boss_def bosses', 'stage_def stages'):
         h.append('extern const %s[];' % t)
@@ -803,6 +911,9 @@ def build():
         f.write('/* Generated by tool/build_assets.py from data/game.ini - do not edit. */\n')
         f.write('#include "assets.h"\n\n')
         f.write(''.join(tables))
+        f.write('\n/* Sprite tiles a boss picture may borrow: first tile, count. */\n')
+        f.write('const unsigned char boss_extra_tiles[] = {%s, 0};\n' % ', '.join(
+            '%d, %d' % r for r in BOSS_EXTRA_TILES))
         f.write('\nconst picture_def pictures[] = {\n')
         for name, sym, size, w, hh, frames, count in picture_info:
             f.write('\t{%s_tiles, %d, %s_tilemap, %s_palette, %d, %d, %d, %d, %d},\t/* %s */\n' % (

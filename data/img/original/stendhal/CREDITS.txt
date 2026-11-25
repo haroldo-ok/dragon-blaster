@@ -1,0 +1,17 @@
+These sprite sheets come from the Stendhal project (https://stendhalgame.org),
+repository https://github.com/arianne/stendhal, data/sprites/monsters/,
+commit 95f3971e9974d74b3e2cb4ad877400309fb1284e.
+
+License: Creative Commons Attribution-ShareAlike 3.0 or later (CC BY-SA 3.0)
+https://creativecommons.org/licenses/by-sa/3.0/
+
+bone_dragon.png       Dracolich           Stendhal dragons, by Kimmo Rundelin (kiheru)
+green_dragon.png      Emerald Wyrm        https://opengameart.org/content/stendhal-dragons
+twin_head_dragon.png  Frost Hydra
+golden_death.png      Infernal Reaper     Stendhal Death, by Kimmo Rundelin (kiheru)
+                                          https://opengameart.org/content/stendhal-death
+
+tool/gen/make_art.py converts the front-facing row of each sheet (row 2) to
+Master System colours: data/img/dracolich.png, boss_emerald_wyrm.png,
+boss_frost_hydra.png and boss_reaper.png. Those are derivative works and are
+distributed under the same license.

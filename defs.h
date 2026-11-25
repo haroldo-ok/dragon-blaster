@@ -15,7 +15,8 @@ typedef struct picture_def {
 	const unsigned char *palette;	/* 16 colours */
 	unsigned char bank;
 	unsigned char w, h, frames;	/* size in 8x8 tiles */
-	unsigned char tile_count;
+	unsigned int tile_count;	/* the first PICTURE_MAIN_TILES go to tile 256 on, the rest
+					   to the boss_extra_tiles ranges (boss pictures only) */
 } picture_def;
 
 typedef struct tileset_def {
@@ -56,6 +57,9 @@ typedef struct boss_attack {
 	unsigned char pattern, fire_delay, duration;	/* duration in units of 4 frames */
 } boss_attack;
 
+#define BOSS_ANIM_LOOP (0)		/* 0 1 2 0 1 2 ... */
+#define BOSS_ANIM_PINGPONG (1)		/* 0 1 2 1 0 1 ... */
+
 typedef struct boss_def {
 	const char *name;
 	unsigned char picture;
@@ -63,6 +67,7 @@ typedef struct boss_def {
 	unsigned char hit_x, hit_y, hit_w, hit_h;
 	unsigned char muzzle_x, muzzle_y;
 	unsigned char anim_delay;
+	unsigned char anim_mode;			/* BOSS_ANIM_LOOP or BOSS_ANIM_PINGPONG */
 	unsigned char move;
 	unsigned char speed, rage_speed;
 	const boss_attack *attacks, *rage_attacks;

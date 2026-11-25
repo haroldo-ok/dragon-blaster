@@ -85,13 +85,34 @@ void clear_tilemap(void) {
 	}
 }
 
-/* Pictures always use the background tiles from 256 on. */
+/*
+ * Pictures use the background tiles from 256 on. Boss pictures may need more
+ * than fit there: the rest goes over sprite tiles that are not used during a
+ * boss fight (listed in boss_extra_tiles), which are loaded back with the
+ * sprite sheet when the next stage starts.
+ */
 void load_picture(unsigned char picture) {
 	static const picture_def *pic;
+	static const unsigned char *tiles, *range;
+	static unsigned int remaining, count;
 
 	pic = pictures + picture;
 	SMS_mapROMBank(pic->bank);
-	SMS_loadTiles(pic->tiles, 256, pic->tiles_size);
+
+	tiles = pic->tiles;
+	remaining = pic->tile_count;
+	count = remaining > PICTURE_MAIN_TILES ? PICTURE_MAIN_TILES : remaining;
+	SMS_loadTiles(tiles, 256, count << 5);
+	tiles += count << 5;
+	remaining -= count;
+
+	for (range = boss_extra_tiles; remaining && range[1]; range += 2) {
+		count = remaining > range[1] ? range[1] : remaining;
+		SMS_loadTiles(tiles, range[0], count << 5);
+		tiles += count << 5;
+		remaining -= count;
+	}
+
 	SMS_mapROMBank(GAME_BANK);
 }
 

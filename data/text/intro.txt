@@ -9,7 +9,7 @@ sacred breaths:
 
   LIGHTNING, FIRE and WIND.
 ----
-@picture dracolich
+@picture dracolich_still
 But the DRACOLICH, undead
 lord of all wyrms, rose from
 his tomb to steal their
@@ -17,11 +17,11 @@ power for himself.
 ----
 @picture boss_gazer
 His armies darken the skies.
-The elder dragons have
-fallen, one by one.
+The elder dragons now serve
+him, their minds enslaved.
 
 Only you, the last
-hatchling, remain.
+hatchling, remain free.
 ----
 Fly, young dragon!
 
